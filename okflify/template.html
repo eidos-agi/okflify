@@ -1,0 +1,653 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__ · okflify</title>
+__FONT_LINK__
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+:root{
+  --p:__PRIMARY__; --pl:__LIGHT__; --pd:__DARK__;
+  --bg:#fff; --raise:#fafafa; --ink:#18181b; --ink2:#3f3f46; --mut:#71717a; --faint:#a1a1aa;
+  --line:#e8e8eb; --line2:#f4f4f5; --acc:var(--p); --accbg:color-mix(in srgb,var(--p) 8%,transparent);
+  --human:#15803d; --job:#b45309; --agent:#8b8b93;
+  --r:12px; --sh:0 1px 3px rgba(0,0,0,.04),0 8px 24px -8px rgba(0,0,0,.06);
+  --fb:__FONT_BODY__,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --fh:__FONT_HEAD__,var(--fb);
+}
+html[data-t="dark"]{
+  --bg:#09090b; --raise:#111113; --ink:#fafafa; --ink2:#c8c8ce; --mut:#8b8b93; --faint:#63636b;
+  --line:#232326; --line2:#161619; --acc:var(--pl); --accbg:color-mix(in srgb,var(--pl) 11%,transparent);
+  --human:#4ade80; --job:#fbbf24; --agent:#8b8b93;
+  --sh:0 1px 3px rgba(0,0,0,.5),0 8px 28px -10px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink2);font:400 16px/1.75 var(--fb);
+ -webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+::selection{background:var(--accbg);color:var(--ink)}
+a{color:var(--acc);text-decoration:none}
+svg{flex:none}
+
+/* decoration */
+body::before{content:"";position:fixed;inset:0 0 auto;height:340px;pointer-events:none;z-index:0;
+ background:radial-gradient(70% 100% at 50% 0%,color-mix(in srgb,var(--p) 9%,transparent),transparent 72%)}
+html[data-decor="grid"] body::before{
+ background:linear-gradient(var(--line2) 1px,transparent 1px),linear-gradient(90deg,var(--line2) 1px,transparent 1px);
+ background-size:44px 44px;height:100%;opacity:.55;mask-image:linear-gradient(#000,transparent 55%)}
+html[data-decor="none"] body::before{display:none}
+
+/* top bar */
+header{position:sticky;top:0;z-index:40;height:60px;flex:none;display:flex;align-items:center;
+ gap:1rem;padding:0 1.6rem;border-bottom:1px solid var(--line);
+ background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.8) blur(14px)}
+.logo{display:flex;align-items:center;gap:.55rem;font:600 .95rem/1 var(--fh);color:var(--ink);
+ letter-spacing:-.018em;white-space:nowrap}
+.mark{width:22px;height:22px;border-radius:6px;background:linear-gradient(140deg,var(--p),var(--pl));
+ display:grid;place-items:center;color:#fff;font:700 11px/1 var(--fb)}
+.ver{font:500 .66rem/1 ui-monospace,monospace;color:var(--acc);background:var(--accbg);
+ padding:.3rem .5rem;border-radius:99px;letter-spacing:.03em;white-space:nowrap}
+.grow{flex:1}
+.srch{position:relative;width:270px;max-width:34vw}
+.srch input{width:100%;height:34px;padding:0 .7rem 0 2.1rem;font:inherit;font-size:.84rem;
+ background:var(--raise);border:1px solid var(--line);border-radius:9px;color:var(--ink);transition:.15s}
+.srch input:focus{outline:0;border-color:var(--acc);box-shadow:0 0 0 3px var(--accbg);background:var(--bg)}
+.srch svg{position:absolute;left:.65rem;top:9px;color:var(--faint)}
+.ib{height:34px;padding:0 .7rem;display:inline-flex;align-items:center;gap:.35rem;font:500 .8rem/1 var(--fb);
+ border:1px solid var(--line);background:var(--raise);color:var(--ink2);border-radius:9px;cursor:pointer;transition:.15s}
+.ib:hover{border-color:var(--acc);color:var(--acc)}
+
+.shell{flex:1;display:flex;min-height:0;position:relative;z-index:1}
+
+/* sidebar — deliberately clean: no badges per row */
+aside{width:266px;flex:none;padding:1.9rem 1rem 5rem 1.6rem;overflow-y:auto;
+ height:calc(100vh - 60px);position:sticky;top:60px;scrollbar-width:thin}
+.sec{display:flex;align-items:center;gap:.5rem;margin:1.7rem 0 .5rem;color:var(--ink);
+ font:600 .8rem/1 var(--fb);letter-spacing:-.01em}
+.sec:first-child{margin-top:0}
+.sec svg{color:var(--mut)}
+aside a.n{display:block;padding:.35rem .6rem;margin-left:.15rem;border-radius:7px;color:var(--mut);
+ font-size:.875rem;line-height:1.5;transition:color .13s,background .13s}
+aside a.n:hover{color:var(--ink);background:var(--line2)}
+aside a.n.on{color:var(--acc);font-weight:550;background:var(--accbg)}
+.empty{padding:.4rem .6rem;color:var(--faint);font-size:.82rem}
+
+/* content */
+main{flex:1;min-width:0;overflow-y:auto;height:calc(100vh - 60px);scroll-behavior:smooth}
+.cols{display:flex;gap:3rem;max-width:74rem;margin:0 auto;padding:2.8rem 3rem 9rem;align-items:flex-start}
+.body{flex:1;min-width:0;max-width:44rem}
+.rail{width:180px;flex:none;position:sticky;top:1rem;font-size:.8rem;max-height:calc(100vh - 9rem);overflow-y:auto}
+.rail .rh{display:flex;gap:.45rem;align-items:center;color:var(--ink);font:600 .78rem/1 var(--fb);margin-bottom:.75rem}
+.rail a{display:flex;gap:.5rem;align-items:baseline;padding:.26rem 0;color:var(--mut);line-height:1.45;transition:color .13s}
+.rail a::before{content:"";width:5px;height:5px;border-radius:50%;background:transparent;flex:none;transform:translateY(-1px)}
+.rail a:hover{color:var(--ink)}
+.rail a.here{color:var(--acc)} .rail a.here::before{background:var(--acc)}
+.rail a.l3{padding-left:.95rem;font-size:.765rem}
+
+.doc{display:none;animation:fi .24s ease}
+.doc.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.eyebrow{color:var(--acc);font:550 .82rem/1 var(--fb);letter-spacing:-.005em;margin-bottom:.7rem}
+
+/* prose — Mintlify weights: light headings, roomy body */
+h1{font:600 2.45rem/1.15 var(--fh);letter-spacing:-.038em;color:var(--ink);margin:0 0 .55rem}
+h2{font:600 1.5rem/1.3 var(--fh);letter-spacing:-.025em;color:var(--ink);margin:3.2rem 0 .9rem;scroll-margin-top:2rem}
+h3{font:600 1.13rem/1.4 var(--fh);letter-spacing:-.016em;color:var(--ink);margin:2.2rem 0 .6rem;scroll-margin-top:2rem}
+h4{font:600 .95rem/1.5 var(--fb);color:var(--ink);margin:1.6rem 0 .4rem}
+p{margin:.95rem 0;color:var(--ink2);font-size:1rem}
+strong{color:var(--ink);font-weight:600}
+.body>p:first-of-type,.eyebrow+h1+p{font-size:1.08rem;color:var(--mut)}
+ul,ol{margin:.85rem 0;padding-left:1.3rem}
+li{margin:.38rem 0;color:var(--ink2)}li::marker{color:var(--faint)}
+hr{border:0;border-top:1px solid var(--line);margin:2.6rem 0}
+code{font:.86em ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--line2);color:var(--ink);
+ padding:.15em .4em;border-radius:5px;border:1px solid var(--line)}
+pre{background:var(--raise);border:1px solid var(--line);border-radius:var(--r);padding:1.05rem 1.2rem;
+ overflow-x:auto;font-size:.82rem;line-height:1.7;box-shadow:var(--sh);margin:1.3rem 0}
+pre code{background:none;border:0;padding:0}
+.tw{overflow-x:auto;margin:1.4rem 0;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+table{border-collapse:collapse;width:100%;font-size:.87rem}
+th,td{padding:.68rem .95rem;text-align:left;vertical-align:top;border-bottom:1px solid var(--line2)}
+th{background:var(--raise);color:var(--ink);font:600 .74rem/1.5 var(--fb);text-transform:uppercase;
+ letter-spacing:.06em;white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--line2)}
+.mermaid{background:var(--raise);border:1px solid var(--line);border-radius:var(--r);padding:1.5rem;
+ margin:1.6rem 0;text-align:center;overflow-x:auto;box-shadow:var(--sh)}
+
+/* callouts */
+.cal{display:flex;gap:.75rem;padding:.95rem 1.1rem;border-radius:var(--r);margin:1.4rem 0;
+ border:1px solid;font-size:.93rem;line-height:1.65}
+.cal p{margin:.25rem 0;color:inherit}.cal p:first-child{margin-top:0}.cal p:last-child{margin-bottom:0}
+.cal .ci{width:17px;height:17px;flex:none;margin-top:.22rem}
+.cal-note{background:color-mix(in srgb,#3b82f6 7%,transparent);border-color:color-mix(in srgb,#3b82f6 24%,transparent);color:var(--ink2)}
+.cal-note .ci{color:#3b82f6}
+.cal-info{background:color-mix(in srgb,#8b5cf6 7%,transparent);border-color:color-mix(in srgb,#8b5cf6 24%,transparent);color:var(--ink2)}
+.cal-info .ci{color:#8b5cf6}
+.cal-tip{background:color-mix(in srgb,#14b8a6 7%,transparent);border-color:color-mix(in srgb,#14b8a6 24%,transparent);color:var(--ink2)}
+.cal-tip .ci{color:#14b8a6}
+.cal-check{background:color-mix(in srgb,#22c55e 8%,transparent);border-color:color-mix(in srgb,#22c55e 26%,transparent);color:var(--ink2)}
+.cal-check .ci{color:#22c55e}
+.cal-warn{background:color-mix(in srgb,#f59e0b 9%,transparent);border-color:color-mix(in srgb,#f59e0b 28%,transparent);color:var(--ink2)}
+.cal-warn .ci{color:#f59e0b}
+.cal-danger{background:color-mix(in srgb,#ef4444 8%,transparent);border-color:color-mix(in srgb,#ef4444 28%,transparent);color:var(--ink2)}
+.cal-danger .ci{color:#ef4444}
+
+/* trust */
+.trust{border:1px solid var(--line);border-radius:var(--r);background:var(--raise);box-shadow:var(--sh);
+ padding:.9rem 1.1rem;margin:0 0 2.4rem;font-size:.83rem}
+.trust .hd{display:flex;align-items:center;gap:.5rem;margin-bottom:.55rem;
+ font:600 .72rem/1 var(--fb);text-transform:uppercase;letter-spacing:.08em;color:var(--faint)}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.dot.human{background:var(--human)}.dot.job{background:var(--job)}.dot.agent{background:var(--agent)}
+.trust dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:.22rem .95rem}
+.trust dt{color:var(--faint);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;line-height:1.85}
+.trust dd{margin:0;color:var(--ink2);font:.76rem/1.7 ui-monospace,monospace}
+.trust .fl{margin-top:.7rem;padding-top:.7rem;border-top:1px dashed var(--line);
+ color:var(--mut);font:.8rem/1.6 var(--fb)}
+
+/* relations */
+.rel{margin-top:3.4rem;padding-top:1.8rem;border-top:1px solid var(--line)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:.8rem;margin:.8rem 0 1.6rem}
+.card{display:block;padding:.85rem 1rem;border:1px solid var(--line);border-radius:var(--r);
+ background:var(--raise);transition:.16s}
+.card:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:var(--sh)}
+.card .t{color:var(--ink);font:550 .875rem/1.4 var(--fb);margin-bottom:.3rem}
+.card .m{display:flex;gap:.4rem;align-items:center;color:var(--faint);font-size:.72rem}
+
+/* graph */
+#gw{border:1px solid var(--line);border-radius:var(--r);background:var(--raise);box-shadow:var(--sh);
+ overflow:hidden;margin:1.6rem 0}
+#graph{display:block;width:100%;height:540px;cursor:grab}#graph:active{cursor:grabbing}
+#graph .link{stroke:var(--line);stroke-width:1.5}
+#graph .node circle{stroke:var(--bg);stroke-width:2.5;cursor:pointer}
+#graph .node text{font:500 11px var(--fb);fill:var(--mut);pointer-events:none;user-select:none}
+.gl{display:flex;gap:1.2rem;flex-wrap:wrap;padding:.75rem 1.1rem;border-top:1px solid var(--line);
+ font-size:.75rem;color:var(--mut);background:var(--bg)}
+.gl span{display:flex;gap:.4rem;align-items:center}
+
+
+
+/* ── command palette ───────────────────────────────────────── */
+#cmdk{position:fixed;inset:0;z-index:300;display:none;background:rgba(0,0,0,.42);backdrop-filter:blur(3px)}
+#cmdk.on{display:block}
+#cmdbox{position:absolute;left:50%;top:15vh;transform:translateX(-50%);width:min(620px,92vw);
+ background:var(--bg);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 70px -12px rgba(0,0,0,.4);overflow:hidden}
+#cmdin{width:100%;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);
+ font:400 1.02rem/1 var(--fb);padding:1.05rem 1.15rem;outline:0}
+#cmdlist{max-height:52vh;overflow-y:auto;padding:.4rem}
+.cmdi{display:flex;gap:.7rem;align-items:baseline;padding:.55rem .75rem;border-radius:8px;cursor:pointer}
+.cmdi.sel{background:var(--accbg)}
+.cmdi .ct{color:var(--ink);font-size:.9rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmdi.sel .ct{color:var(--acc);font-weight:550}
+.cmdi .cg{color:var(--faint);font-size:.72rem;white-space:nowrap}
+.cmdi .cs{color:var(--mut);font-size:.76rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cmdfoot{border-top:1px solid var(--line);padding:.5rem .9rem;color:var(--faint);font-size:.72rem;display:flex;gap:.9rem}
+#cmdfoot kbd{font:600 .66rem/1 ui-monospace,monospace;background:var(--line2);border:1px solid var(--line);
+ border-radius:4px;padding:.14em .34em;color:var(--ink2)}
+.cmdempty{padding:1.4rem;color:var(--faint);font-size:.86rem;text-align:center}
+
+/* ── copy page menu ────────────────────────────────────────── */
+.pgacts{position:absolute;right:0;top:0;display:flex;z-index:6}
+.pgbtn{height:34px;padding:0 .7rem;display:inline-flex;align-items:center;gap:.4rem;font:500 .8rem/1 var(--fb);
+ border:1px solid var(--line);background:var(--raise);color:var(--ink2);cursor:pointer;transition:.14s}
+.pgbtn:first-child{border-radius:9px 0 0 9px}
+.pgbtn:last-child{border-radius:0 9px 9px 0;border-left:0;padding:0 .45rem}
+.pgbtn:hover{color:var(--acc);border-color:var(--acc)}
+#pgmenu{position:absolute;right:0;top:40px;width:288px;background:var(--bg);border:1px solid var(--line);
+ border-radius:12px;box-shadow:0 18px 50px -12px rgba(0,0,0,.35);padding:.35rem;display:none;z-index:7}
+#pgmenu.on{display:block}
+#pgmenu button{display:flex;gap:.65rem;align-items:flex-start;width:100%;text-align:left;border:0;
+ background:none;padding:.55rem .6rem;border-radius:8px;cursor:pointer;color:var(--ink)}
+#pgmenu button:hover{background:var(--line2)}
+#pgmenu .mi{width:26px;height:26px;flex:none;display:grid;place-items:center;border:1px solid var(--line);
+ border-radius:7px;color:var(--mut);background:var(--raise)}
+#pgmenu .mt{font:550 .845rem/1.3 var(--fb)}
+#pgmenu .md{font:.74rem/1.35 var(--fb);color:var(--faint);margin-top:.12rem}
+.docwrap{position:relative}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(12px);opacity:0;
+ background:var(--ink);color:var(--bg);font:550 .82rem/1 var(--fb);padding:.6rem .95rem;border-radius:9px;
+ z-index:400;pointer-events:none;transition:.2s;box-shadow:var(--sh)}
+#toast.on{opacity:1;transform:translateX(-50%)}
+
+/* ── code copy ─────────────────────────────────────────────── */
+.pre-w{position:relative}
+.pre-w>.cpy{position:absolute;top:.5rem;right:.5rem;width:28px;height:28px;display:grid;place-items:center;
+ border:1px solid var(--line);background:var(--bg);color:var(--mut);border-radius:7px;cursor:pointer;
+ opacity:0;transition:.14s}
+.pre-w:hover>.cpy{opacity:1}
+.pre-w>.cpy:hover{color:var(--acc);border-color:var(--acc)}
+@media print{#cmdk,.pgacts,#pgmenu,#toast,.cpy{display:none!important}}
+
+/* ── lightbox: Adobe-style diagram surfing ─────────────────── */
+.mermaid,figure img,.body img{cursor:zoom-in}
+#lb{position:fixed;inset:0;z-index:200;display:none;background:color-mix(in srgb,var(--bg) 93%,#000);
+ backdrop-filter:blur(6px)}
+#lb.on{display:block;animation:fi .16s ease}
+#lbstage{position:absolute;inset:0;overflow:hidden;cursor:grab}
+#lbstage.grab{cursor:grab}#lbstage.grabbing{cursor:grabbing}
+#lbinner{position:absolute;left:50%;top:50%;transform-origin:0 0;will-change:transform;
+ transition:transform .09s cubic-bezier(.22,.61,.36,1)}
+#lbinner.free{transition:none}
+#lbinner svg,#lbinner img{display:block;max-width:none;height:auto;filter:drop-shadow(0 12px 40px rgba(0,0,0,.28))}
+#lbbar{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;gap:.3rem;
+ align-items:center;background:var(--raise);border:1px solid var(--line);border-radius:11px;
+ padding:.34rem .4rem;box-shadow:var(--sh);z-index:2}
+#lbbar button{width:30px;height:28px;display:grid;place-items:center;border:0;background:none;
+ color:var(--mut);border-radius:7px;cursor:pointer;font:600 .78rem/1 var(--fb)}
+#lbbar button:hover{background:var(--line2);color:var(--ink)}
+#lbpct{min-width:52px;text-align:center;font:600 .74rem/1 ui-monospace,monospace;color:var(--ink);
+ padding:0 .2rem;cursor:default}
+#lbsep{width:1px;height:18px;background:var(--line);margin:0 .18rem}
+#lbclose{position:absolute;top:18px;right:20px;z-index:2;width:34px;height:34px;display:grid;
+ place-items:center;border:1px solid var(--line);background:var(--raise);color:var(--mut);
+ border-radius:9px;cursor:pointer;box-shadow:var(--sh)}
+#lbclose:hover{color:var(--acc);border-color:var(--acc)}
+#lbhint{position:absolute;top:18px;left:20px;z-index:2;font:.72rem/1.5 var(--fb);color:var(--faint);
+ background:var(--raise);border:1px solid var(--line);border-radius:9px;padding:.42rem .65rem;
+ box-shadow:var(--sh);max-width:min(52ch,60vw)}
+#lbhint kbd{font:600 .68rem/1 ui-monospace,monospace;background:var(--line2);color:var(--ink2);
+ border:1px solid var(--line);border-radius:4px;padding:.14em .34em;margin:0 .1em}
+@media print{#lb{display:none!important}}
+
+@media print{
+ header,aside,.rail,#gw,.rel{display:none!important}
+ body{display:block}body::before{display:none}
+ .shell{display:block}main{height:auto;overflow:visible}
+ .cols{display:block;max-width:none;padding:0}.body{max-width:none}
+ .doc{display:block!important;page-break-after:always;animation:none}
+ .doc:last-child{page-break-after:auto}
+ pre,table,.mermaid,.trust,.cal{break-inside:avoid}h1,h2,h3,h4{break-after:avoid}
+ a{color:inherit}@page{margin:15mm}
+}
+@media (max-width:1180px){.rail{display:none}.cols{padding:2.4rem}}
+@media (max-width:900px){
+ .shell{display:block}aside{width:auto;height:auto;position:static;border-bottom:1px solid var(--line);padding:1.2rem 1.4rem}
+ main{height:auto}.cols{padding:1.6rem 1.4rem 5rem}.srch{width:170px}
+}
+</style></head><body>
+
+<header>
+  <div class="logo"><span class="mark">A</span>__BRANDNAME__</div>
+  <span class="ver">OKF v__OKFV__</span>
+  <div class="grow"></div>
+  <div class="srch">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+    <input id="q" type="search" placeholder="Search documentation…" autocomplete="off">
+  </div>
+  <button class="ib" id="th" title="Toggle theme">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9c-4.97 0-9-4.03-9-9Z"/></svg></button>
+  <a class="ib" href="https://github.com/eidos-agi/okflify" target="_blank" rel="noopener"
+     title="okflify — converts OKF bundles into HTML" style="text-decoration:none;gap:.4rem">
+     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.94.83.09-.65.35-1.09.63-1.34-2.22-.25-4.555-1.11-4.555-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>okflify</a>
+  <button class="ib" onclick="print()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M8 14h8v7H8z"/></svg>Print</button>
+</header>
+
+<div class="shell">
+  <aside id="nav"></aside>
+  <main><div class="cols"><div class="body" id="body"></div><div class="rail" id="rail"></div></div>
+    <footer style="max-width:74rem;margin:0 auto;padding:0 3rem 3rem;color:var(--faint);font-size:.78rem;
+      border-top:1px solid var(--line);padding-top:1.4rem">
+      Rendered by <strong style="color:var(--acc);font-weight:600">okflify</strong> — an app for reading
+      Open Knowledge Format v0.2 bundles. OKF is a graph, not a tree.
+    </footer>
+  </main>
+</div>
+
+<script>
+const DOCS=__DOCS__,EDGES=__EDGES__,EYEBROW="__EYEBROW__";
+const B=Object.fromEntries(DOCS.map(d=>[d.slug,d]));
+const tier=v=>(v||"").startsWith("human:")?"human":(v||"").startsWith("job:")?"job":"agent";
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const I={info:'<circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/>',
+ "circle-help":'<circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4M12 17h.01"/>',
+ "triangle-alert":'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/>',
+ "octagon-alert":'<path d="M8 2h8l6 6v8l-6 6H8l-6-6V8Z"/><path d="M12 8v4M12 16h.01"/>',
+ "circle-check":'<circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/>',
+ lightbulb:'<path d="M9 18h6M10 22h4M12 2a6 6 0 0 0-4 10.5c.6.7 1 1.5 1 2.5h6c0-1 .4-1.8 1-2.5A6 6 0 0 0 12 2Z"/>',
+ map:'<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Z"/><path d="M9 3v15M15 6v15"/>',
+ layers:'<path d="m12 2 9 5-9 5-9-5Z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/>',
+ file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/>',
+ flask:'<path d="M9 2v7L4 19a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-10V2M8 2h8M7 14h10"/>',
+ list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>'};
+const svg=(n,s=16)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${I[n]||I.info}</svg>`;
+const GI={Overview:"map",Bundle:"layers",Concepts:"file",Evidence:"flask",Learnings:"lightbulb"};
+
+/* theme */
+const mq=matchMedia("(prefers-color-scheme:dark)");
+function setT(t){document.documentElement.dataset.t=t;localStorage.okfT=t;
+ const D=t==="dark";
+ // theme:"base" + explicit variables — the built-in themes render dark subgraph
+ // fills with dark labels, which is unreadable. Bind mermaid to our palette.
+ const ink=D?"#fafafa":"#18181b", mut=D?"#c8c8ce":"#3f3f46", line=D?"#3a3a40":"#c8c8ce",
+       card=D?"#18181b":"#ffffff", clus=D?"#141417":"#f6f6f7", bg=D?"#09090b":"#ffffff";
+ mermaid.initialize({startOnLoad:false,securityLevel:"loose",flowchart:{curve:"basis",padding:14},
+  theme:"base",themeVariables:{
+   background:bg, mainBkg:card, primaryColor:card, primaryTextColor:ink, primaryBorderColor:line,
+   secondaryColor:clus, secondaryTextColor:ink, secondaryBorderColor:line,
+   tertiaryColor:clus, tertiaryTextColor:ink, tertiaryBorderColor:line,
+   lineColor:mut, textColor:ink, nodeTextColor:ink, nodeBorder:line,
+   clusterBkg:clus, clusterBorder:line, titleColor:ink,
+   edgeLabelBackground:bg, labelBoxBkgColor:card, labelBoxBorderColor:line, labelTextColor:ink,
+   actorBkg:card, actorBorder:line, actorTextColor:ink, actorLineColor:mut,
+   signalColor:mut, signalTextColor:ink, noteBkgColor:clus, noteTextColor:ink, noteBorderColor:line,
+   sequenceNumberColor:bg, altBackground:clus,
+   fontFamily:'__FONT_BODY__,ui-sans-serif,system-ui', fontSize:"14px"}});
+ if(typeof resetMermaid==="function")resetMermaid();else R.clear();
+ paint();if(location.hash.slice(1)==="graph")G();}
+document.getElementById("th").onclick=()=>setT(document.documentElement.dataset.t==="dark"?"light":"dark");
+document.documentElement.dataset.decor="__DECOR__";
+
+/* nav */
+const G0=[];DOCS.forEach(d=>{let g=G0.find(x=>x.n===d.group);if(!g){g={n:d.group,i:[]};G0.push(g)}g.i.push(d)});
+function nav(f=""){const q=f.toLowerCase();
+ let h=`<div class="sec">${svg(GI.Overview,15)}Overview</div><a class="n" href="#graph" data-nav="graph">Knowledge graph</a>`;
+ let hits=0;
+ h+=G0.map(g=>{const it=g.i.filter(d=>!q||d.title.toLowerCase().includes(q)||d.slug.includes(q)||String(d.tags||"").toLowerCase().includes(q));
+   hits+=it.length;if(!it.length)return"";
+   return `<div class="sec">${svg(GI[g.n]||"file",15)}${g.n}</div>`+
+     it.map(d=>`<a class="n" href="#${d.slug}" data-nav="${d.slug}">${esc(d.title)}</a>`).join("")}).join("");
+ if(q&&!hits)h+=`<div class="empty">No matches</div>`;
+ document.getElementById("nav").innerHTML=h;mark();}
+document.getElementById("q").oninput=e=>nav(e.target.value);
+
+/* docs */
+document.getElementById("body").innerHTML=DOCS.map(d=>{
+ const v=d.verified||{},t=tier(v.by);
+ const fl=t==="agent"?`<div class="fl"><strong>Agent-verified.</strong> Under OKF v0.2 weighting (human &gt; job &gt; agent) treat as unverified for gate-shaped decisions.</div>`:"";
+ const tr=v.by?`<div class="trust"><div class="hd"><span class="dot ${t}"></span>${esc(v.by)} · ${d.type}</div><dl>
+   <dt>verified</dt><dd>${esc(v.at||"—")}</dd><dt>method</dt><dd>${esc(v.method||"—")}</dd>
+   ${v.stale_after?`<dt>stale after</dt><dd>${esc(v.stale_after)}</dd>`:""}</dl>${fl}</div>`:"";
+ const cards=(l,lb)=>l&&l.length?`<h4>${lb}</h4><div class="cards">`+l.map(s=>{const o=B[s];if(!o)return"";
+   return `<a class="card" href="#${s}" data-nav="${s}"><div class="t">${esc(o.title)}</div>
+     <div class="m"><span class="dot ${tier(o.verified&&o.verified.by)}"></span>${o.type}</div></a>`}).join("")+`</div>`:"";
+ const rel=((d.out&&d.out.length)||(d.in&&d.in.length))?`<div class="rel">${cards(d.out,"Links to")}${cards(d.in,"Linked from")}</div>`:"";
+ const eb=EYEBROW==="section"?`<div class="eyebrow">${esc(d.group)}</div>`:"";
+ return `<article class="doc" id="doc-${d.slug}">${eb}${tr}${d.html}${rel}</article>`}).join("")+
+`<article class="doc" id="doc-graph"><div class="eyebrow">Overview</div>
+ <h1>Knowledge graph</h1>
+ <p>OKF is a <strong>graph, not a tree</strong>. Directories are storage; the real structure is the links documents make to each other. Every edge is a markdown reference. Drag to rearrange, click to open.</p>
+ <div id="gw"><svg id="graph"></svg><div class="gl">
+   <span><span class="dot human"></span>human-verified</span><span><span class="dot job"></span>job-verified</span>
+   <span><span class="dot agent"></span>agent-verified</span><span>node size = inbound links</span></div></div></article>`;
+
+/* mermaid: keep the source, because mermaid.run() is a no-op once a block
+   carries data-processed. Without this the FIRST theme rendered wins forever
+   and a light page keeps dark diagrams. */
+const MSRC=new Map();
+document.querySelectorAll(".mermaid").forEach((e,i)=>{e.dataset.mid="m"+i;MSRC.set("m"+i,e.textContent)});
+function resetMermaid(){
+ document.querySelectorAll(".mermaid").forEach(e=>{
+  const src=MSRC.get(e.dataset.mid);if(src==null)return;
+  e.removeAttribute("data-processed");e.innerHTML="";e.textContent=src});
+ R.clear();
+}
+
+/* icons in callouts */
+document.querySelectorAll(".ci").forEach(e=>e.innerHTML=svg(e.dataset.i,17));
+
+/* graph */
+const S=document.getElementById("graph");let P={},drag=null,spin=0;
+const N=DOCS.map(d=>({...d,deg:EDGES.filter(e=>e.t===d.slug).length}));
+function G(){const W=S.clientWidth||900,H=540;
+ if(!Object.keys(P).length)N.forEach((n,i)=>{const a=i/N.length*6.2832;
+   P[n.slug]={x:W/2+Math.cos(a)*W*.26,y:H/2+Math.sin(a)*H*.3,vx:0,vy:0}});
+ const k=Math.sqrt(W*H/Math.max(N.length,1))*.6;
+ for(let it=0;it<3;it++){
+  for(let i=0;i<N.length;i++)for(let j=i+1;j<N.length;j++){const a=P[N[i].slug],b=P[N[j].slug];
+   let dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy||1,f=k*k/d2*.9;
+   a.vx+=dx*f;a.vy+=dy*f;b.vx-=dx*f;b.vy-=dy*f}
+  EDGES.forEach(e=>{const a=P[e.s],b=P[e.t];if(!a||!b)return;
+   let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,f=(d-k*1.5)*.0006*d;
+   a.vx+=dx/d*f;a.vy+=dy/d*f;b.vx-=dx/d*f;b.vy-=dy/d*f});
+  N.forEach(n=>{const p=P[n.slug];p.vx+=(W/2-p.x)*.0022;p.vy+=(H/2-p.y)*.0022;
+   p.x+=Math.max(-9,Math.min(9,p.vx));p.y+=Math.max(-9,Math.min(9,p.vy));p.vx*=.82;p.vy*=.82;
+   p.x=Math.max(70,Math.min(W-70,p.x));p.y=Math.max(28,Math.min(H-26,p.y))})}
+ S.setAttribute("viewBox",`0 0 ${W} ${H}`);
+ S.innerHTML=EDGES.map(e=>{const a=P[e.s],b=P[e.t];return a&&b?`<line class="link" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/>`:""}).join("")+
+  N.map(n=>{const p=P[n.slug],r=7+Math.min(n.deg*2.2,9),s=n.title.length>24?n.title.slice(0,23)+"…":n.title;
+   return `<g class="node" data-s="${n.slug}"><circle cx="${p.x}" cy="${p.y}" r="${r}" fill="var(--${tier(n.verified&&n.verified.by)})"/>
+    <text x="${p.x}" y="${p.y+r+14}" text-anchor="middle">${esc(s)}</text></g>`}).join("")}
+S.addEventListener("mousedown",e=>{const g=e.target.closest(".node");if(g){drag=g.dataset.s;e.preventDefault()}});
+addEventListener("mousemove",e=>{if(!drag)return;const r=S.getBoundingClientRect();
+ P[drag].x=(e.clientX-r.left)*((S.viewBox.baseVal.width||r.width)/r.width);
+ P[drag].y=(e.clientY-r.top)*(540/r.height);P[drag].vx=P[drag].vy=0;G()});
+addEventListener("mouseup",()=>drag=null);
+S.addEventListener("click",e=>{const g=e.target.closest(".node");if(g&&!drag)location.hash=g.dataset.s});
+(function loop(){if(location.hash.slice(1)==="graph"&&spin++<170)G();requestAnimationFrame(loop)})();
+
+/* paint */
+const R=new Set();
+function mark(){const s=location.hash.slice(1)||DOCS[0].slug;
+ document.querySelectorAll("aside a.n").forEach(a=>a.classList.toggle("on",a.dataset.nav===s))}
+function paint(){
+ const s=location.hash.slice(1)||DOCS[0].slug;
+ document.querySelectorAll(".doc").forEach(e=>e.classList.remove("on"));
+ const el=document.getElementById("doc-"+s)||document.getElementById("doc-"+DOCS[0].slug);
+ el.classList.add("on");mark();
+ if(!R.has(s)){R.add(s);const n=el.querySelectorAll(".mermaid");if(n.length)mermaid.run({nodes:n})}
+ const hs=[...el.querySelectorAll("h2,h3")];
+ document.getElementById("rail").innerHTML=hs.length>1
+  ?`<div class="rh">${svg("list",14)}On this page</div>`+hs.map((h,i)=>{h.id=h.id||`h-${s}-${i}`;
+     return `<a href="#${h.id}" data-toc class="${h.tagName==="H3"?"l3":""}">${esc(h.textContent)}</a>`}).join(""):"";
+ try{mountActions();mountCode();mountSpy(el)}catch(e){/* defined later in this
+   script; the trailing IIFE performs the first mount. Must not abort paint(),
+   which would leave the sidebar unbuilt. */}
+ if(s==="graph"){spin=0;P={};G()}
+ document.querySelector("main").scrollTop=0;
+}
+document.addEventListener("click",e=>{
+ const t=e.target.closest("[data-toc]");
+ if(t){e.preventDefault();document.getElementById(t.getAttribute("href").slice(1))?.scrollIntoView();
+   document.querySelectorAll("[data-toc]").forEach(a=>a.classList.remove("here"));t.classList.add("here");return}
+ const a=e.target.closest("[data-nav]");if(a){e.preventDefault();location.hash=a.dataset.nav}});
+addEventListener("hashchange",paint);
+addEventListener("beforeprint",()=>document.querySelectorAll(".doc").forEach(el=>{
+ const s=el.id.replace("doc-","");if(!R.has(s)){R.add(s);const n=el.querySelectorAll(".mermaid");if(n.length)mermaid.run({nodes:n})}}));
+setT(localStorage.okfT||("__DEFAULTMODE__"==="dark"?"dark":"__DEFAULTMODE__"==="light"?"light":(mq.matches?"dark":"light")));
+nav();
+if(!location.hash)location.hash=DOCS[0].slug;else paint();
+
+
+/* ── page actions: copy for LLMs ───────────────────────────── */
+const RAW=Object.fromEntries(DOCS.map(d=>[d.slug,d.src||""]));
+function toast(m){let t=document.getElementById("toast");
+ if(!t){t=document.createElement("div");t.id="toast";document.body.appendChild(t)}
+ t.textContent=m;t.classList.add("on");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("on"),1900)}
+function pageMd(slug){const d=B[slug];if(!d)return"";const v=d.verified||{};
+ return `# ${d.title}\n\n> OKF v0.2 · type: ${d.type} · verified.by: ${v.by||"—"} (${v.at||"—"})\n`+
+  `> method: ${v.method||"—"}\n${v.by&&!String(v.by).startsWith("human:")?"> NOTE: not human-verified — treat as unverified for gate-shaped decisions.\n":""}`+
+  `\n${RAW[slug]||""}`}
+async function copyMd(slug,msg){try{await navigator.clipboard.writeText(pageMd(slug));toast(msg||"Copied as Markdown")}
+ catch(e){const t=document.createElement("textarea");t.value=pageMd(slug);document.body.appendChild(t);
+  t.select();document.execCommand("copy");t.remove();toast(msg||"Copied as Markdown")}}
+const MI={copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
+ bot:'<rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M9 14h.01M15 14h.01"/>',
+ spark:'<path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/>',
+ term:'<path d="m7 9 3 3-3 3M13 15h4"/><rect x="3" y="4" width="18" height="16" rx="2"/>'};
+function mountActions(){
+ document.querySelectorAll(".doc").forEach(el=>{
+  if(el.querySelector(".pgacts")||el.id==="doc-graph")return;
+  const slug=el.id.replace("doc-","");
+  el.classList.add("docwrap");
+  const w=document.createElement("div");w.className="pgacts";
+  w.innerHTML=`<button class="pgbtn" data-a="copy">${svg("copy",14)}Copy page</button>
+   <button class="pgbtn" data-a="menu"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg></button>`;
+  const m=document.createElement("div");m.id="pgmenu";m.dataset.slug=slug;
+  m.innerHTML=[["copy","copy","Copy page","Copy as Markdown for LLMs"],
+   ["spark","claude","Open in Claude","Copies the page, then opens claude.ai"],
+   ["bot","gpt","Open in ChatGPT","Copies the page, then opens chatgpt.com"],
+   ["term","bundle","Copy whole bundle","Every document as one Markdown file"]]
+   .map(([i,a,t,d])=>`<button data-a="${a}"><span class="mi">${svgI(i,14)}</span>
+     <span><span class="mt">${t}</span><span class="md">${d}</span></span></button>`).join("");
+  w.appendChild(m);el.prepend(w);
+ });
+}
+const svgI=(n,s)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${MI[n]||MI.copy}</svg>`;
+document.addEventListener("click",e=>{
+ const b=e.target.closest(".pgbtn,#pgmenu button");
+ document.querySelectorAll("#pgmenu.on").forEach(m=>{if(!m.contains(e.target))m.classList.remove("on")});
+ if(!b)return;
+ const host=b.closest(".doc"),slug=host.id.replace("doc-",""),a=b.dataset.a;
+ if(a==="menu"){host.querySelector("#pgmenu").classList.toggle("on");return}
+ if(a==="copy"){copyMd(slug);host.querySelector("#pgmenu").classList.remove("on");return}
+ if(a==="claude"||a==="gpt"){copyMd(slug,"Copied — paste into the chat");
+  open(a==="claude"?"https://claude.ai/new":"https://chatgpt.com/","_blank","noopener");
+  host.querySelector("#pgmenu").classList.remove("on");return}
+ if(a==="bundle"){const all=DOCS.map(d=>pageMd(d.slug)).join("\n\n---\n\n");
+  navigator.clipboard.writeText(all).then(()=>toast(`Copied ${DOCS.length} documents`),()=>toast("Copy failed"));
+  host.querySelector("#pgmenu").classList.remove("on")}
+});
+
+/* ── code copy buttons ─────────────────────────────────────── */
+function mountCode(){document.querySelectorAll("pre:not(.mermaid)").forEach(pre=>{
+ if(pre.parentElement.classList.contains("pre-w"))return;
+ const w=document.createElement("div");w.className="pre-w";
+ pre.parentNode.insertBefore(w,pre);w.appendChild(pre);
+ const b=document.createElement("button");b.className="cpy";b.title="Copy";b.innerHTML=svgI("copy",13);
+ b.onclick=()=>{navigator.clipboard.writeText(pre.innerText).then(()=>toast("Code copied"))};
+ w.appendChild(b)})}
+
+/* ── ⌘K command palette ────────────────────────────────────── */
+(function(){
+ const k=document.createElement("div");k.id="cmdk";k.innerHTML=`<div id="cmdbox">
+  <input id="cmdin" placeholder="Search documents and headings…" autocomplete="off">
+  <div id="cmdlist"></div>
+  <div id="cmdfoot"><span><kbd>↑</kbd><kbd>↓</kbd> navigate</span><span><kbd>↵</kbd> open</span><span><kbd>esc</kbd> close</span></div></div>`;
+ document.body.appendChild(k);
+ const inp=k.querySelector("#cmdin"),list=k.querySelector("#cmdlist");let sel=0,rows=[];
+ const IDX=[];DOCS.forEach(d=>{IDX.push({t:d.title,g:d.group,s:d.slug,sub:d.type});
+  (d.src||"").split("\n").filter(l=>/^#{2,3} /.test(l)).forEach(h=>
+    IDX.push({t:h.replace(/^#+ /,""),g:d.title,s:d.slug,sub:"heading"}))});
+ IDX.push({t:"Knowledge graph",g:"Overview",s:"graph",sub:"view"});
+ function render(q){const f=q.toLowerCase().trim();
+  rows=(!f?IDX.slice(0,14):IDX.filter(r=>r.t.toLowerCase().includes(f)||r.g.toLowerCase().includes(f)).slice(0,40));
+  sel=0;
+  list.innerHTML=rows.length?rows.map((r,i)=>`<div class="cmdi ${i===0?"sel":""}" data-i="${i}">
+    <span class="ct">${esc(r.t)}<span class="cs">${esc(r.g)}</span></span><span class="cg">${esc(r.sub)}</span></div>`).join("")
+   :`<div class="cmdempty">No matches</div>`}
+ function go(){const r=rows[sel];if(!r)return;location.hash=r.s;close()}
+ function openK(){k.classList.add("on");inp.value="";render("");inp.focus()}
+ function close(){k.classList.remove("on")}
+ addEventListener("keydown",e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();k.classList.contains("on")?close():openK();return}
+  if(!k.classList.contains("on"))return;
+  if(e.key==="Escape"){close();e.preventDefault()}
+  else if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+   sel=Math.max(0,Math.min(rows.length-1,sel+(e.key==="ArrowDown"?1:-1)));
+   [...list.children].forEach((c,i)=>c.classList.toggle("sel",i===sel));
+   list.children[sel]?.scrollIntoView({block:"nearest"});e.preventDefault()}
+  else if(e.key==="Enter"){go();e.preventDefault()}});
+ inp.oninput=e=>render(e.target.value);
+ list.onclick=e=>{const r=e.target.closest(".cmdi");if(r){sel=+r.dataset.i;go()}};
+ k.onclick=e=>{if(e.target===k)close()};
+ document.getElementById("q").addEventListener("focus",e=>{e.target.blur();openK()});
+})();
+
+/* first mount: paint() ran before these definitions existed (TDZ), so its
+   mount calls threw. Do it once here; later navigations hit paint() normally. */
+addEventListener("DOMContentLoaded",()=>{});
+/* ── scroll-spy on the rail ────────────────────────────────── */
+let spy=null;
+function mountSpy(el){
+ if(spy)spy.disconnect();
+ const hs=[...el.querySelectorAll("h2,h3")];if(hs.length<2)return;
+ spy=new IntersectionObserver(es=>{
+  const vis=es.filter(x=>x.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top);
+  if(!vis.length)return;const id=vis[0].target.id;
+  document.querySelectorAll("[data-toc]").forEach(a=>a.classList.toggle("here",a.getAttribute("href")==="#"+id));
+ },{root:document.querySelector("main"),rootMargin:"-8% 0px -72% 0px",threshold:0});
+ hs.forEach(h=>spy.observe(h));
+}
+
+(function(){const el=document.querySelector(".doc.on");
+ if(el){try{mountActions();mountCode();mountSpy(el)}catch(e){console.error("okflify mount:",e)}}})();
+
+/* ── lightbox ──────────────────────────────────────────────── */
+(function(){
+ const lb=document.createElement("div");lb.id="lb";lb.innerHTML=`
+  <div id="lbstage"><div id="lbinner"></div></div>
+  <div id="lbhint"><kbd>scroll</kbd> zoom · <kbd>space</kbd>+drag or drag to pan ·
+   <kbd>+</kbd><kbd>−</kbd> zoom · <kbd>0</kbd> fit · <kbd>1</kbd> 100% ·
+   <kbd>↑↓←→</kbd> nudge · <kbd>esc</kbd> close</div>
+  <button id="lbclose" title="Close (esc)">
+   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  <div id="lbbar">
+   <button data-z="out" title="Zoom out (−)">−</button>
+   <div id="lbpct">100%</div>
+   <button data-z="in" title="Zoom in (+)">+</button>
+   <div id="lbsep"></div>
+   <button data-z="fit" title="Fit (0)">Fit</button>
+   <button data-z="one" title="Actual size (1)">1:1</button>
+  </div>`;
+ document.body.appendChild(lb);
+ const stage=lb.querySelector("#lbstage"),inner=lb.querySelector("#lbinner"),pct=lb.querySelector("#lbpct");
+ let sc=1,tx=0,ty=0,base=1,nat={w:0,h:0},panning=false,spc=false,px=0,py=0;
+
+ const apply=(smooth)=>{inner.classList.toggle("free",!smooth);
+   inner.style.transform=`translate(${tx}px,${ty}px) scale(${sc}) translate(-50%,-50%)`;
+   pct.textContent=Math.round(sc/base*100)+"%"};
+ function fit(smooth=true){
+   const pad=90,W=innerWidth-pad*2,H=innerHeight-pad*2;
+   base=Math.min(W/nat.w,H/nat.h,1.6)||1;sc=base;tx=0;ty=0;apply(smooth)}
+ function zoomAt(f,cx,cy,smooth=false){
+   const n=Math.min(Math.max(sc*f,base*0.25),base*14);
+   const ox=cx-innerWidth/2-tx, oy=cy-innerHeight/2-ty;
+   tx-=ox*(n/sc-1); ty-=oy*(n/sc-1); sc=n; apply(smooth)}
+
+ function open(src){
+   const clone=src.cloneNode(true);
+   clone.removeAttribute("style");clone.removeAttribute("width");clone.removeAttribute("height");
+   let w=0,h=0;
+   if(clone.tagName.toLowerCase()==="svg"){
+     const vb=src.viewBox&&src.viewBox.baseVal;
+     w=(vb&&vb.width)||src.getBoundingClientRect().width;
+     h=(vb&&vb.height)||src.getBoundingClientRect().height;
+     clone.setAttribute("width",w);clone.setAttribute("height",h);
+   }else{w=src.naturalWidth||src.getBoundingClientRect().width;h=src.naturalHeight||src.getBoundingClientRect().height}
+   nat={w:w||800,h:h||600};
+   inner.innerHTML="";inner.appendChild(clone);
+   lb.classList.add("on");document.body.style.overflow="hidden";fit(false);
+ }
+ function close(){lb.classList.remove("on");document.body.style.overflow="";inner.innerHTML=""}
+
+ document.addEventListener("click",e=>{
+   if(lb.classList.contains("on"))return;
+   const m=e.target.closest(".mermaid");
+   if(m){const svg=m.querySelector("svg");if(svg){e.preventDefault();open(svg);return}}
+   const img=e.target.closest(".body img");if(img){e.preventDefault();open(img)}
+ });
+ lb.querySelector("#lbclose").onclick=close;
+ stage.addEventListener("mousedown",e=>{if(e.button!==0)return;
+   panning=true;px=e.clientX;py=e.clientY;stage.classList.add("grabbing");e.preventDefault()});
+ addEventListener("mousemove",e=>{if(!panning)return;
+   tx+=e.clientX-px;ty+=e.clientY-py;px=e.clientX;py=e.clientY;apply(false)});
+ addEventListener("mouseup",()=>{panning=false;stage.classList.remove("grabbing")});
+ stage.addEventListener("wheel",e=>{e.preventDefault();
+   if(e.shiftKey&&!e.ctrlKey&&!e.metaKey){tx-=e.deltaY;apply(false);return}
+   zoomAt(e.deltaY<0?1.14:1/1.14,e.clientX,e.clientY)},{passive:false});
+ stage.addEventListener("dblclick",e=>{
+   if(sc>base*1.05)fit();else zoomAt(2.2,e.clientX,e.clientY,true)});
+ addEventListener("keydown",e=>{
+   if(!lb.classList.contains("on")){return}
+   const k=e.key;
+   if(k==="Escape"){close();e.preventDefault();return}
+   if(k===" "&&!spc){spc=true;stage.classList.add("grab");e.preventDefault();return}
+   if(k==="+"||k==="="){zoomAt(1.25,innerWidth/2,innerHeight/2,true);e.preventDefault()}
+   else if(k==="-"||k==="_"){zoomAt(1/1.25,innerWidth/2,innerHeight/2,true);e.preventDefault()}
+   else if(k==="0"){fit();e.preventDefault()}
+   else if(k==="1"){const f=1/base;zoomAt(f*base/sc*base,innerWidth/2,innerHeight/2,true);sc=1*base/base;sc=1;apply(true);e.preventDefault()}
+   else if(k.startsWith("Arrow")){const d=e.shiftKey?110:36;
+     if(k==="ArrowUp")ty+=d;if(k==="ArrowDown")ty-=d;if(k==="ArrowLeft")tx+=d;if(k==="ArrowRight")tx-=d;
+     apply(true);e.preventDefault()}
+ });
+ addEventListener("keyup",e=>{if(e.key===" "){spc=false;stage.classList.remove("grab")}});
+ addEventListener("resize",()=>{if(lb.classList.contains("on"))fit(false)});
+ lb.querySelector("#lbbar").addEventListener("click",e=>{
+   const b=e.target.closest("[data-z]");if(!b)return;const z=b.dataset.z;
+   if(z==="in")zoomAt(1.25,innerWidth/2,innerHeight/2,true);
+   else if(z==="out")zoomAt(1/1.25,innerWidth/2,innerHeight/2,true);
+   else if(z==="fit")fit();
+   else{sc=1;tx=0;ty=0;apply(true)}});
+})();
+
+</script></body></html>

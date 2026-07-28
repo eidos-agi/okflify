@@ -1,0 +1,22 @@
+[project]
+name = "okflify"
+version = "0.1.0"
+description = "okflify: converts OKF bundles into HTML"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = []
+keywords = ["okf", "open-knowledge-format", "documentation", "knowledge-graph"]
+
+[project.scripts]
+okflify = "okflify.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["okflify*"]
+
+[tool.setuptools.package-data]
+okflify = ["template.html"]
