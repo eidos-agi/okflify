@@ -114,6 +114,10 @@ tbody tr:last-child td{border-bottom:0}
 tbody tr:hover{background:var(--line2)}
 .mermaid{background:var(--raise);border:1px solid var(--line);border-radius:var(--r);padding:1.5rem;
  margin:1.6rem 0;text-align:center;overflow-x:auto;box-shadow:var(--sh)}
+/* mermaid emits an inline max-width at the diagram's natural size, which is
+   often far narrower than the column — the result is unreadably small. Let it
+   fill the column; the lightbox handles anything still too dense. */
+.mermaid svg{width:100%!important;max-width:100%!important;height:auto}
 
 /* callouts */
 .cal{display:flex;gap:.75rem;padding:.95rem 1.1rem;border-radius:var(--r);margin:1.4rem 0;
@@ -188,7 +192,7 @@ tbody tr:hover{background:var(--line2)}
 .cmdempty{padding:1.4rem;color:var(--faint);font-size:.86rem;text-align:center}
 
 /* ── copy page menu ────────────────────────────────────────── */
-.titlerow{display:flex;align-items:flex-start;gap:1.5rem;position:relative}
+.titlerow{display:flex;align-items:flex-start;gap:1.5rem;position:relative;margin-bottom:1.6rem}
 .titlerow h1{flex:1;min-width:0;margin:0}
 .titlerow .pgacts{flex:none;margin-top:.55rem}
 .pgacts{display:flex;position:relative;z-index:6}
@@ -197,16 +201,16 @@ tbody tr:hover{background:var(--line2)}
 .pgbtn:first-child{border-radius:9px 0 0 9px}
 .pgbtn:last-child{border-radius:0 9px 9px 0;border-left:0;padding:0 .45rem}
 .pgbtn:hover{color:var(--acc);border-color:var(--acc)}
-#pgmenu{position:absolute;right:0;top:42px;width:300px;background:var(--bg);border:1px solid var(--line);
+.pgmenu{position:absolute;right:0;top:42px;width:300px;background:var(--bg);border:1px solid var(--line);
  border-radius:12px;box-shadow:0 18px 50px -12px rgba(0,0,0,.35);padding:.35rem;display:none;z-index:7}
-#pgmenu.on{display:block}
-#pgmenu button{display:flex;gap:.7rem;align-items:flex-start;width:100%;text-align:left;border:0;
+.pgmenu.on{display:block}
+.pgmenu button{display:flex;gap:.7rem;align-items:flex-start;width:100%;text-align:left;border:0;
  background:none;padding:.55rem .6rem;border-radius:8px;cursor:pointer;color:var(--ink)}
 #pgmenu button:hover{background:var(--line2)}
-#pgmenu .mi{width:26px;height:26px;flex:none;display:grid;place-items:center;border:1px solid var(--line);
+.pgmenu .mi{width:26px;height:26px;flex:none;display:grid;place-items:center;border:1px solid var(--line);
  border-radius:7px;color:var(--mut);background:var(--raise)}
-#pgmenu .mt{display:block;font:550 .845rem/1.35 var(--fb)}
-#pgmenu .md{display:block;font:400 .745rem/1.4 var(--fb);color:var(--faint);margin-top:.15rem}
+.pgmenu .mt{display:block;font:550 .845rem/1.35 var(--fb)}
+.pgmenu .md{display:block;font:400 .745rem/1.4 var(--fb);color:var(--faint);margin-top:.15rem}
 .docwrap{position:relative}
 #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(12px);opacity:0;
  background:var(--ink);color:var(--bg);font:550 .82rem/1 var(--fb);padding:.6rem .95rem;border-radius:9px;
@@ -220,7 +224,7 @@ tbody tr:hover{background:var(--line2)}
  opacity:0;transition:.14s}
 .pre-w:hover>.cpy{opacity:1}
 .pre-w>.cpy:hover{color:var(--acc);border-color:var(--acc)}
-@media print{#cmdk,.pgacts,#pgmenu,#toast,.cpy{display:none!important}}
+@media print{#cmdk,.pgacts,.pgmenu,#toast,.cpy{display:none!important}}
 
 /* ── lightbox: Adobe-style diagram surfing ─────────────────── */
 .mermaid,figure img,.body img{cursor:zoom-in}
@@ -475,14 +479,17 @@ function mountActions(){
   if(el.querySelector(".pgacts")||el.id==="doc-graph")return;
   const slug=el.id.replace("doc-","");
   el.classList.add("docwrap");
-  const h1=el.querySelector(":scope > h1");
+  // Must be idempotent: an earlier pass can abort mid-loop, leaving a doc
+  // with a titlerow but no actions. Look for the h1 in either position.
+  const h1=el.querySelector(":scope > h1, :scope > .titlerow > h1");
   if(!h1)return;
-  const row=document.createElement("div");row.className="titlerow";
-  h1.parentNode.insertBefore(row,h1);row.appendChild(h1);
+  let row=el.querySelector(":scope > .titlerow");
+  if(!row){row=document.createElement("div");row.className="titlerow";
+    h1.parentNode.insertBefore(row,h1);row.appendChild(h1);}
   const w=document.createElement("div");w.className="pgacts";
   w.innerHTML=`<button class="pgbtn" data-a="copy">${svg("copy",14)}Copy page</button>
    <button class="pgbtn" data-a="menu"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg></button>`;
-  const m=document.createElement("div");m.id="pgmenu";m.dataset.slug=slug;
+  const m=document.createElement("div");m.className="pgmenu";m.dataset.slug=slug;
   m.innerHTML=[["copy","copy","Copy page","Copy as Markdown for LLMs"],
    ["spark","claude","Open in Claude","Copies the page, then opens claude.ai"],
    ["bot","gpt","Open in ChatGPT","Copies the page, then opens chatgpt.com"],
@@ -494,18 +501,18 @@ function mountActions(){
 }
 const svgI=(n,s)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${MI[n]||MI.copy}</svg>`;
 document.addEventListener("click",e=>{
- const b=e.target.closest(".pgbtn,#pgmenu button");
- document.querySelectorAll("#pgmenu.on").forEach(m=>{if(!m.contains(e.target))m.classList.remove("on")});
+ const b=e.target.closest(".pgbtn,.pgmenu button");
+ document.querySelectorAll(".pgmenu.on").forEach(m=>{if(!m.contains(e.target))m.classList.remove("on")});
  if(!b)return;
  const host=b.closest(".doc"),slug=host.id.replace("doc-",""),a=b.dataset.a;
- if(a==="menu"){host.querySelector("#pgmenu").classList.toggle("on");return}
- if(a==="copy"){copyMd(slug);host.querySelector("#pgmenu").classList.remove("on");return}
+ if(a==="menu"){host.querySelector(".pgmenu").classList.toggle("on");return}
+ if(a==="copy"){copyMd(slug);host.querySelector(".pgmenu").classList.remove("on");return}
  if(a==="claude"||a==="gpt"){copyMd(slug,"Copied — paste into the chat");
   open(a==="claude"?"https://claude.ai/new":"https://chatgpt.com/","_blank","noopener");
-  host.querySelector("#pgmenu").classList.remove("on");return}
+  host.querySelector(".pgmenu").classList.remove("on");return}
  if(a==="bundle"){const all=DOCS.map(d=>pageMd(d.slug)).join("\n\n---\n\n");
   navigator.clipboard.writeText(all).then(()=>toast(`Copied ${DOCS.length} documents`),()=>toast("Copy failed"));
-  host.querySelector("#pgmenu").classList.remove("on")}
+  host.querySelector(".pgmenu").classList.remove("on")}
 });
 
 /* ── code copy buttons ─────────────────────────────────────── */
