@@ -144,6 +144,11 @@ def collect(bundle: pathlib.Path):
         if not path.exists():
             return
         fm, body = frontmatter(path.read_text())
+        # The frontmatter title is what the sidebar, breadcrumb and graph use.
+        # If the body opens with its own h1 it competes — the OKF template ships
+        # a generic "# Investigation" — so drop it and render the real title.
+        if fm.get("title"):
+            body = re.sub(r"\A\s*#\s+[^\n]*\n+", "", body, count=1)
         docs.append(dict(
             slug=path.stem, group=group, file=str(path.relative_to(bundle)),
             title=fm.get("title") or path.stem, type=fm.get("type", "—"),

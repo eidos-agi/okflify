@@ -188,9 +188,10 @@ tbody tr:hover{background:var(--line2)}
 .cmdempty{padding:1.4rem;color:var(--faint);font-size:.86rem;text-align:center}
 
 /* ── copy page menu ────────────────────────────────────────── */
-.pghead{display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;position:relative}
-.pghead .eyebrow{margin:0;flex:1;min-width:0}
-.pgacts{display:flex;flex:none;position:relative;z-index:6}
+.titlerow{display:flex;align-items:flex-start;gap:1.5rem;position:relative}
+.titlerow h1{flex:1;min-width:0;margin:0}
+.titlerow .pgacts{flex:none;margin-top:.55rem}
+.pgacts{display:flex;position:relative;z-index:6}
 .pgbtn{height:34px;padding:0 .7rem;display:inline-flex;align-items:center;gap:.4rem;font:500 .8rem/1 var(--fb);
  border:1px solid var(--line);background:var(--raise);color:var(--ink2);cursor:pointer;transition:.14s}
 .pgbtn:first-child{border-radius:9px 0 0 9px}
@@ -366,7 +367,8 @@ document.getElementById("body").innerHTML=DOCS.map(d=>{
      <div class="m"><span class="dot ${tier(o.verified&&o.verified.by)}"></span>${o.type}</div></a>`}).join("")+`</div>`:"";
  const rel=((d.out&&d.out.length)||(d.in&&d.in.length))?`<div class="rel">${cards(d.out,"Links to")}${cards(d.in,"Linked from")}</div>`:"";
  const eb=EYEBROW==="section"?`<div class="eyebrow">${esc(d.group)}</div>`:"";
- return `<article class="doc" id="doc-${d.slug}">${eb}${tr}${d.html}${rel}</article>`}).join("")+
+ const h1=`<h1>${esc(d.title)}</h1>`;
+ return `<article class="doc" id="doc-${d.slug}">${eb}${h1}${tr}${d.html}${rel}</article>`}).join("")+
 `<article class="doc" id="doc-graph"><div class="eyebrow">Overview</div>
  <h1>Knowledge graph</h1>
  <p>OKF is a <strong>graph, not a tree</strong>. Directories are storage; the real structure is the links documents make to each other. Every edge is a markdown reference. Drag to rearrange, click to open.</p>
@@ -473,9 +475,10 @@ function mountActions(){
   if(el.querySelector(".pgacts")||el.id==="doc-graph")return;
   const slug=el.id.replace("doc-","");
   el.classList.add("docwrap");
-  const eb=el.querySelector(":scope > .eyebrow");
-  const row=document.createElement("div");row.className="pghead";
-  if(eb)row.appendChild(eb);else row.appendChild(document.createElement("div"));
+  const h1=el.querySelector(":scope > h1");
+  if(!h1)return;
+  const row=document.createElement("div");row.className="titlerow";
+  h1.parentNode.insertBefore(row,h1);row.appendChild(h1);
   const w=document.createElement("div");w.className="pgacts";
   w.innerHTML=`<button class="pgbtn" data-a="copy">${svg("copy",14)}Copy page</button>
    <button class="pgbtn" data-a="menu"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg></button>`;
@@ -486,7 +489,7 @@ function mountActions(){
    ["term","bundle","Copy whole bundle","Every document as one Markdown file"]]
    .map(([i,a,t,d])=>`<button data-a="${a}"><span class="mi">${svgI(i,14)}</span>
      <span><span class="mt">${t}</span><span class="md">${d}</span></span></button>`).join("");
-  w.appendChild(m);row.appendChild(w);el.prepend(row);
+  w.appendChild(m);row.appendChild(w);
  });
 }
 const svgI=(n,s)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${MI[n]||MI.copy}</svg>`;
