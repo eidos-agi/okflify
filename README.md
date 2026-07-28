@@ -82,4 +82,4 @@ v0.1.0. Known gaps, honestly:
 
 ## Related
 
-Sibling of [mafia](../mafia) (Chromium for agents). Same house, same conventions.
+Sibling of [mafia](https://github.com/eidos-agi/mafia) (Chromium for agents). Same house, same conventions.

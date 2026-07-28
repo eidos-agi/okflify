@@ -26,7 +26,7 @@ at view time, not at build time.
 ## Verifying changes
 
 Rendering bugs here are visual and will not raise. `tsc`-equivalent confidence
-does not exist. **Check the rendered DOM in a real browser** — [mafia](../mafia)
+does not exist. **Check the rendered DOM in a real browser** — [mafia](https://github.com/eidos-agi/mafia)
 is the sibling tool:
 
 ```sh
