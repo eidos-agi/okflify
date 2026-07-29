@@ -3,6 +3,10 @@
 <title>__TITLE__ · okflify</title>
 __FONT_LINK__
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/layout-base@2.0.1/layout-base.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cose-base@2.2.0/cose-base.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-fcose@2.2.0/cytoscape-fcose.js"></script>
 <style>
 :root{
   --p:__PRIMARY__; --pl:__LIGHT__; --pd:__DARK__;
@@ -21,7 +25,7 @@ html[data-t="dark"]{
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
-body{background:var(--bg);color:var(--ink2);font:400 16px/1.75 var(--fb);
+body{background:var(--bg);color:var(--ink2);font:400 16px/1.66 var(--fb);
  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
 ::selection{background:var(--accbg);color:var(--ink)}
 a{color:var(--acc);text-decoration:none}
@@ -40,7 +44,8 @@ header{position:sticky;top:0;z-index:40;height:60px;flex:none;display:flex;align
  gap:1rem;padding:0 1.6rem;border-bottom:1px solid var(--line);
  background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.8) blur(14px)}
 .logo{display:flex;align-items:center;gap:.55rem;font:600 .95rem/1 var(--fh);color:var(--ink);
- letter-spacing:-.018em;white-space:nowrap}
+ letter-spacing:-.018em;white-space:nowrap;text-decoration:none;border:0;cursor:pointer}
+.logo:hover{opacity:.72}
 .mark{width:22px;height:22px;border-radius:6px;background:linear-gradient(140deg,var(--p),var(--pl));
  display:grid;place-items:center;color:#fff;font:700 11px/1 var(--fb)}
 .ver{font:500 .66rem/1 ui-monospace,monospace;color:var(--acc);background:var(--accbg);
@@ -94,7 +99,7 @@ h1{font:600 2.45rem/1.15 var(--fh);letter-spacing:-.038em;color:var(--ink);margi
 h2{font:600 1.5rem/1.3 var(--fh);letter-spacing:-.025em;color:var(--ink);margin:3.2rem 0 .9rem;scroll-margin-top:2rem}
 h3{font:600 1.13rem/1.4 var(--fh);letter-spacing:-.016em;color:var(--ink);margin:2.2rem 0 .6rem;scroll-margin-top:2rem}
 h4{font:600 .95rem/1.5 var(--fb);color:var(--ink);margin:1.6rem 0 .4rem}
-p{margin:.95rem 0;color:var(--ink2);font-size:1rem}
+p{margin:.85rem 0;color:var(--ink2);font-size:1rem}
 strong{color:var(--ink);font-weight:600}
 .body>p:first-of-type,.eyebrow+h1+p{font-size:1.08rem;color:var(--mut)}
 ul,ol{margin:.85rem 0;padding-left:1.3rem}
@@ -117,7 +122,10 @@ tbody tr:hover{background:var(--line2)}
 /* mermaid emits an inline max-width at the diagram's natural size, which is
    often far narrower than the column — the result is unreadably small. Let it
    fill the column; the lightbox handles anything still too dense. */
-.mermaid svg{width:100%!important;max-width:100%!important;height:auto}
+/* Do NOT force width:100%. A 1280px diagram in a 700px column renders its
+   14px labels at 7px. sizeDiagrams() scales UP small diagrams to fill the
+   column and lets wide ones keep their natural size and scroll. */
+.mermaid svg{height:auto;display:block;margin:0 auto}
 
 /* callouts */
 .cal{display:flex;gap:.75rem;padding:.95rem 1.1rem;border-radius:var(--r);margin:1.4rem 0;
@@ -162,7 +170,8 @@ tbody tr:hover{background:var(--line2)}
 /* graph */
 #gw{border:1px solid var(--line);border-radius:var(--r);background:var(--raise);box-shadow:var(--sh);
  overflow:hidden;margin:1.6rem 0}
-#graph{display:block;width:100%;height:540px;cursor:grab}#graph:active{cursor:grabbing}
+#graph{display:block;width:100%;height:min(66vh,620px);cursor:grab;background:var(--raise)}
+#graph:active{cursor:grabbing}
 #graph .link{stroke:var(--line);stroke-width:1.5}
 #graph .node circle{stroke:var(--bg);stroke-width:2.5;cursor:pointer}
 #graph .node text{font:500 11px var(--fb);fill:var(--mut);pointer-events:none;user-select:none}
@@ -296,7 +305,7 @@ a.tleaf .tk{font:500 .66rem/1 ui-monospace,monospace;color:var(--faint);flex:non
 </style></head><body>
 
 <header>
-  <div class="logo"><span class="mark">A</span>__BRANDNAME__</div>
+  <a class="logo" href="#" id="home" title="Back to the index"><span class="mark">A</span>__BRANDNAME__</a>
   <span class="ver">OKF v__OKFV__</span>
   <div class="grow"></div>
   <div class="srch">
@@ -307,7 +316,7 @@ a.tleaf .tk{font:500 .66rem/1 ui-monospace,monospace;color:var(--faint);flex:non
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9c-4.97 0-9-4.03-9-9Z"/></svg></button>
   <a class="ib" href="https://github.com/eidos-agi/okflify" target="_blank" rel="noopener"
      title="okflify — converts OKF bundles into HTML" style="text-decoration:none;gap:.4rem">
-     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.94.83.09-.65.35-1.09.63-1.34-2.22-.25-4.555-1.11-4.555-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>okflify</a>
+     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.94.83.09-.65.35-1.09.63-1.34-2.22-.25-4.555-1.11-4.555-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>GitHub</a>
   <button class="ib" onclick="print()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M8 14h8v7H8z"/></svg>Print</button>
 </header>
@@ -363,6 +372,7 @@ function setT(t){document.documentElement.dataset.t=t;localStorage.okfT=t;
    sequenceNumberColor:bg, altBackground:clus,
    fontFamily:'__FONT_BODY__,ui-sans-serif,system-ui', fontSize:"14px"}});
  if(typeof resetMermaid==="function")resetMermaid();else R.clear();
+ if(typeof graphTheme==="function")graphTheme();
  paint();if(location.hash.slice(1)==="graph")G();}
 document.getElementById("th").onclick=()=>setT(document.documentElement.dataset.t==="dark"?"light":"dark");
 document.documentElement.dataset.decor="__DECOR__";
@@ -403,7 +413,7 @@ document.getElementById("body").innerHTML=DOCS.map(d=>{
 `<article class="doc" id="doc-graph"><div class="eyebrow">Overview</div>
  <h1>Knowledge graph</h1>
  <p>OKF is a <strong>graph, not a tree</strong>. Directories are storage; the real structure is the links documents make to each other. Every edge is a markdown reference. Drag to rearrange, click to open.</p>
- <div id="gw"><svg id="graph"></svg><div class="gl">
+ <div id="gw"><div id="graph"></div><div class="gl">
    <span><span class="dot human"></span>human-verified</span><span><span class="dot job"></span>job-verified</span>
    <span><span class="dot agent"></span>agent-verified</span><span>node size = inbound links</span></div></div></article>`;
 
@@ -412,6 +422,20 @@ document.getElementById("body").innerHTML=DOCS.map(d=>{
    and a light page keeps dark diagrams. */
 const MSRC=new Map();
 document.querySelectorAll(".mermaid").forEach((e,i)=>{e.dataset.mid="m"+i;MSRC.set("m"+i,e.textContent)});
+function sizeDiagrams(root){
+  (root||document).querySelectorAll(".mermaid svg").forEach(svg=>{
+    const box=svg.closest(".mermaid"); if(!box) return;
+    const vb=svg.viewBox&&svg.viewBox.baseVal;
+    const nat=(vb&&vb.width)||svg.getBoundingClientRect().width;
+    const pad=parseFloat(getComputedStyle(box).paddingLeft)||0;
+    const avail=box.clientWidth-pad*2;
+    if(!nat||!avail) return;
+    // Shrinking a wide diagram to fit renders its labels at ~7px — measured.
+    // Keep natural size and let the box scroll; scale UP only when there is room.
+    svg.style.width=(nat<avail ? Math.min(avail, nat*1.7) : nat)+"px";
+    svg.style.maxWidth="none";
+  });
+}
 function resetMermaid(){
  document.querySelectorAll(".mermaid").forEach(e=>{
   const src=MSRC.get(e.dataset.mid);if(src==null)return;
@@ -444,34 +468,69 @@ function buildTree(){
       <div class="tnode">${inner}</div></details>`}).join("");
 }
 
-const S=document.getElementById("graph");let P={},drag=null,spin=0;
-const N=DOCS.map(d=>({...d,deg:EDGES.filter(e=>e.t===d.slug).length}));
-function G(){const W=S.clientWidth||900,H=540;
- if(!Object.keys(P).length)N.forEach((n,i)=>{const a=i/N.length*6.2832;
-   P[n.slug]={x:W/2+Math.cos(a)*W*.26,y:H/2+Math.sin(a)*H*.3,vx:0,vy:0}});
- const k=Math.sqrt(W*H/Math.max(N.length,1))*.6;
- for(let it=0;it<3;it++){
-  for(let i=0;i<N.length;i++)for(let j=i+1;j<N.length;j++){const a=P[N[i].slug],b=P[N[j].slug];
-   let dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy||1,f=k*k/d2*.9;
-   a.vx+=dx*f;a.vy+=dy*f;b.vx-=dx*f;b.vy-=dy*f}
-  EDGES.forEach(e=>{const a=P[e.s],b=P[e.t];if(!a||!b)return;
-   let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,f=(d-k*1.5)*.0006*d;
-   a.vx+=dx/d*f;a.vy+=dy/d*f;b.vx-=dx/d*f;b.vy-=dy/d*f});
-  N.forEach(n=>{const p=P[n.slug];p.vx+=(W/2-p.x)*.0022;p.vy+=(H/2-p.y)*.0022;
-   p.x+=Math.max(-9,Math.min(9,p.vx));p.y+=Math.max(-9,Math.min(9,p.vy));p.vx*=.82;p.vy*=.82;
-   p.x=Math.max(70,Math.min(W-70,p.x));p.y=Math.max(28,Math.min(H-26,p.y))})}
- S.setAttribute("viewBox",`0 0 ${W} ${H}`);
- S.innerHTML=EDGES.map(e=>{const a=P[e.s],b=P[e.t];return a&&b?`<line class="link" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/>`:""}).join("")+
-  N.map(n=>{const p=P[n.slug],r=7+Math.min(n.deg*2.2,9),s=n.title.length>24?n.title.slice(0,23)+"…":n.title;
-   return `<g class="node" data-s="${n.slug}"><circle cx="${p.x}" cy="${p.y}" r="${r}" fill="var(--${tier(n.verified&&n.verified.by)})"/>
-    <text x="${p.x}" y="${p.y+r+14}" text-anchor="middle">${esc(s)}</text></g>`}).join("")}
-S.addEventListener("mousedown",e=>{const g=e.target.closest(".node");if(g){drag=g.dataset.s;e.preventDefault()}});
-addEventListener("mousemove",e=>{if(!drag)return;const r=S.getBoundingClientRect();
- P[drag].x=(e.clientX-r.left)*((S.viewBox.baseVal.width||r.width)/r.width);
- P[drag].y=(e.clientY-r.top)*(540/r.height);P[drag].vx=P[drag].vy=0;G()});
-addEventListener("mouseup",()=>drag=null);
-S.addEventListener("click",e=>{const g=e.target.closest(".node");if(g&&!drag)location.hash=g.dataset.s});
-(function loop(){if(location.hash.slice(1)==="graph"&&spin++<170)G();requestAnimationFrame(loop)})();
+/* Graph: cytoscape + fCoSE. The hand-rolled force layout it replaces had no
+   arrowheads, overlapped its own labels, clipped text at the frame, and
+   re-randomised on every visit. fCoSE does overlap avoidance and gives a stable
+   seeded layout; cytoscape brings real pan/zoom and hit-testing. */
+let CY=null;
+function G(){
+  const host=document.getElementById("graph"); if(!host||!window.cytoscape) return;
+  if(CY){ CY.resize(); CY.fit(undefined,40); return; }
+  try{ cytoscape.use(window.cytoscapeFcose); }catch(e){}
+  const css=getComputedStyle(document.documentElement);
+  const v=n=>css.getPropertyValue(n).trim();
+  const deg={}; EDGES.forEach(e=>deg[e.t]=(deg[e.t]||0)+1);
+
+  CY=cytoscape({
+    container:host,
+    elements:[
+      ...DOCS.map(d=>({data:{id:d.slug,label:(d.title.length>30?d.title.slice(0,29)+"…":d.title),
+                             full:d.title,tier:tier(d.verified&&d.verified.by),
+                             deg:deg[d.slug]||0}})),
+      ...EDGES.map((e,i)=>({data:{id:"e"+i,source:e.s,target:e.t}}))],
+    style:[
+      {selector:"node",style:{
+        "background-color":ele=>v("--"+ele.data("tier")),
+        "width":ele=>16+Math.min(ele.data("deg")*5,22),
+        "height":ele=>16+Math.min(ele.data("deg")*5,22),
+        "label":"data(label)","font-size":"10px","font-family":v("--fb")||"Inter",
+        "color":v("--mut"),"text-valign":"bottom","text-margin-y":6,
+        "text-wrap":"wrap","text-max-width":"96px","text-background-color":v("--bg"),
+        "text-background-opacity":.9,"text-background-padding":3,"text-margin-y":8,
+        "border-width":2,"border-color":v("--bg"),"transition-property":"opacity","transition-duration":"140ms"}},
+      {selector:"edge",style:{
+        "width":1.4,"line-color":v("--line"),"curve-style":"bezier",
+        "target-arrow-shape":"triangle","target-arrow-color":v("--line"),
+        "arrow-scale":.85,"opacity":.9}},
+      {selector:".hl",style:{"line-color":v("--acc"),"target-arrow-color":v("--acc"),"width":2.2,"opacity":1}},
+      {selector:".dim",style:{"opacity":.12}},
+      {selector:"node:selected",style:{"border-color":v("--acc"),"border-width":3}}],
+    layout:{name:"preset"},   // real layout runs below, so we can clamp after it
+    minZoom:.25, maxZoom:3, wheelSensitivity:.25,
+  });
+
+  // animate:false makes fcose run synchronously, so binding layoutstop after
+  // construction is already too late. Run it explicitly, then clamp.
+  CY.layout({ name: window.cytoscapeFcose ? "fcose" : "cose",
+              animate:false, randomize:false, quality:"proof", fit:false,
+              nodeSeparation:210, idealEdgeLength:180, nodeRepulsion:16000,
+              nodeDimensionsIncludeLabels:true, padding:56 }).run();
+  CY.fit(undefined,50);
+  // Cytoscape scales label text with zoom — fitting 8 nodes to a tall box
+  // zooms ~1.8x and turns captions into billboards. Never magnify past 1:1.
+  if(CY.zoom()>1){ CY.zoom(1); CY.center(); }
+
+  // hover: light up the neighbourhood, dim the rest
+  CY.on("mouseover","node",ev=>{
+    const n=ev.target, keep=n.closedNeighborhood();
+    CY.elements().difference(keep).addClass("dim");
+    keep.edges().addClass("hl");
+    host.style.cursor="pointer";
+  });
+  CY.on("mouseout","node",()=>{ CY.elements().removeClass("dim hl"); host.style.cursor="grab"; });
+  CY.on("tap","node",ev=>{ location.hash=ev.target.id(); });
+}
+function graphTheme(){ if(CY){ CY.destroy(); CY=null; } }
 
 /* paint */
 const R=new Set();
@@ -482,7 +541,7 @@ function paint(){
  document.querySelectorAll(".doc").forEach(e=>e.classList.remove("on"));
  const el=document.getElementById("doc-"+s)||document.getElementById("doc-"+DOCS[0].slug);
  el.classList.add("on");mark();
- if(!R.has(s)){R.add(s);const n=el.querySelectorAll(".mermaid");if(n.length)mermaid.run({nodes:n})}
+ if(!R.has(s)){R.add(s);const n=el.querySelectorAll(".mermaid");if(n.length)mermaid.run({nodes:n}).then(()=>sizeDiagrams(el))}
  const hs=[...el.querySelectorAll("h2,h3")];
  document.getElementById("rail").innerHTML=hs.length>1
   ?`<div class="rh">${svg("list",14)}On this page</div>`+hs.map((h,i)=>{h.id=h.id||`h-${s}-${i}`;
@@ -490,7 +549,7 @@ function paint(){
  try{mountActions();mountCode();mountSpy(el)}catch(e){/* defined later in this
    script; the trailing IIFE performs the first mount. Must not abort paint(),
    which would leave the sidebar unbuilt. */}
- if(s==="graph"){spin=0;P={};G()}
+ if(s==="graph")G();
  if(s==="tree")buildTree();
  document.querySelector("main").scrollTop=0;
 }
@@ -499,9 +558,10 @@ document.addEventListener("click",e=>{
  if(t){e.preventDefault();document.getElementById(t.getAttribute("href").slice(1))?.scrollIntoView();
    document.querySelectorAll("[data-toc]").forEach(a=>a.classList.remove("here"));t.classList.add("here");return}
  const a=e.target.closest("[data-nav]");if(a){e.preventDefault();location.hash=a.dataset.nav}});
+document.getElementById("home").addEventListener("click",e=>{e.preventDefault();location.hash=DOCS[0].slug});
 addEventListener("hashchange",paint);
 addEventListener("beforeprint",()=>document.querySelectorAll(".doc").forEach(el=>{
- const s=el.id.replace("doc-","");if(!R.has(s)){R.add(s);const n=el.querySelectorAll(".mermaid");if(n.length)mermaid.run({nodes:n})}}));
+ const s=el.id.replace("doc-","");if(!R.has(s)){R.add(s);const n=el.querySelectorAll(".mermaid");if(n.length)mermaid.run({nodes:n}).then(()=>sizeDiagrams(el))}}));
 setT(localStorage.okfT||("__DEFAULTMODE__"==="dark"?"dark":"__DEFAULTMODE__"==="light"?"light":(mq.matches?"dark":"light")));
 nav();
 if(!location.hash)location.hash=DOCS[0].slug;else paint();
