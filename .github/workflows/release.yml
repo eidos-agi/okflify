@@ -1,58 +1,99 @@
-# Publish to PyPI on a version tag, via Trusted Publishing (OIDC).
+# Release is a side effect of changing the version. Nothing else to remember.
 #
-# No API token anywhere — not in secrets, not in the vault, not in a shell. PyPI
-# verifies the workflow identity directly, which is why the vault notes trusted
-# publishing as the primary path and the stored token as a manual fallback.
+#   edit pyproject version → push to master → published to PyPI + tagged
 #
-# One-time setup on PyPI (a human, in the web UI):
+# No token anywhere: PyPI verifies the workflow identity over OIDC (trusted
+# publishing). The vault's stored token is a manual fallback and is not used.
+#
+# Idempotent by design — it asks PyPI whether the version already exists and
+# exits cleanly if so, because a version can never be reused or re-uploaded.
+#
+# ONE-TIME human step (nothing can automate it — it is an identity trust
+# decision on PyPI's side):
 #   pypi.org → Your projects → Publishing → Add a pending publisher
 #     owner: eidos-agi   repository: okflify
 #     workflow: release.yml   environment: pypi
-#
-# Then release with:
-#   git tag v0.1.2 && git push --tags
-#
-# A version can never be reused on PyPI, so the tag must match pyproject and the
-# job refuses to publish if it does not.
 
 name: release
 
 on:
   push:
-    tags: ["v*"]
+    branches: [master]
+    paths: ["pyproject.toml", "okflify/**"]
   workflow_dispatch:
+    inputs:
+      force:
+        description: "Publish even if the version did not change"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
+  check:
+    name: is there a new version?
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      publish: ${{ steps.v.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - id: v
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "pyproject version: $version"
+
+          # PyPI is the source of truth — not the git history. This makes reruns,
+          # reverts and force-pushes all safe.
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+                 "https://pypi.org/pypi/okflify/$version/json")
+          if [ "$code" = "200" ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            # Every shipment gets a version. If source changed but the version is
+            # already published, the change would ship to the demo under a number
+            # that means something else — which is how okflify shipped eleven
+            # times as 0.1.0. Fail loudly rather than skip quietly.
+            if git diff --name-only "${{ github.event.before }}" HEAD 2>/dev/null \
+                 | grep -q '^okflify/'; then
+              echo "::error::okflify/ changed but $version is already on PyPI — bump the version"
+              exit 1
+            fi
+            echo "already on PyPI and no source change — nothing to do"
+          else
+            echo "not on PyPI (HTTP $code) — will publish"
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
   publish:
+    needs: check
+    if: needs.check.outputs.publish == 'true' || inputs.force
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
-      id-token: write      # required for trusted publishing
+      id-token: write     # trusted publishing
+      contents: write     # tag the release
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: tag must match pyproject version
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          set -euo pipefail
-          tag="${GITHUB_REF_NAME#v}"
-          proj=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)
-          echo "tag=$tag pyproject=$proj"
-          [ "$tag" = "$proj" ] || { echo "::error::tag $tag != pyproject $proj"; exit 1; }
-
-      - run: pip install build twine
+      - run: pip install -e ".[dev]" build twine
+      - run: python -m pytest -q
       - run: python -m build
 
       - name: the wheel must carry the example bundle
-        # An earlier build shipped zero example files, so `okflify --example`
-        # would have crashed for every PyPI user while working from a checkout.
-        # PyPI cannot un-publish a version, so this is checked before upload.
+        # An earlier build shipped ZERO example files: `okflify --example` would
+        # have crashed for every PyPI user while working from a source checkout,
+        # which is where it was tested. PyPI cannot un-publish, so check first.
         run: |
           python - <<'PY'
           import glob, zipfile, sys
@@ -64,9 +105,27 @@ jobs:
               sys.exit("example bundle missing from the wheel")
           if not any("template.html" in x for x in names):
               sys.exit("template.html missing from the wheel")
+          meta = zipfile.ZipFile(whl).read(
+              [x for x in names if x.endswith("METADATA")][0]).decode()
+          import re
+          imgs = re.findall(r'src="([^"]+)"', meta)
+          bad = [i for i in imgs if not i.startswith("https://")]
+          if bad:
+              sys.exit(f"README has relative image paths, they break on PyPI: {bad}")
+          print(f"README images: {len(imgs)}, all absolute")
           PY
 
       - run: python -m twine check dist/*
 
       - uses: pypa/gh-action-pypi-publish@release/v1
-        # no `password:` — OIDC
+        # no password: — OIDC
+
+      - name: tag the released commit
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "okflify $VERSION"
+          git push origin "v$VERSION"

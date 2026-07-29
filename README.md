@@ -145,7 +145,14 @@ python -m pytest -q          # 14 tests
 okflify --example --open
 ```
 
-Every push to `master` that touches `okflify/` **must bump the patch version** — CI fails otherwise. okflify once shipped eleven times at `0.1.0`, and on PyPI a version can never be reused.
+**Releasing is bumping the version.** Edit `version` in `pyproject.toml`, push to
+`master`, and CI publishes to PyPI over OIDC and tags the commit. There is no
+tag to remember, no token anywhere, and no upload step.
+
+It asks PyPI whether that version exists rather than trusting git, so re-runs,
+reverts and force-pushes are all safe. Touching `okflify/` without bumping
+**fails the build** — okflify once shipped eleven times as `0.1.0`, and on PyPI
+a version can never be reused.
 
 ## Related
 
