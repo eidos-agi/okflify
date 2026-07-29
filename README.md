@@ -13,9 +13,14 @@ okflify ~/path/to/bundle --open
 **[See it live →](https://eidos-agi.github.io/okflify/)** — the rendered example, no install.
 Rebuilt from source by CI on every push to `master`, so the demo cannot drift from the renderer.
 
-**Start with `--example`.** The [`example/`](example/) bundle *is* okflify's
-documentation — written as an OKF bundle, rendered by the tool it documents. If
-the renderer breaks, that page does not build, so the docs cannot drift.
+**Start with `--example`.** It renders a real investigation — *why were the
+diagrams unreadable?* — with the measurements that answered it, the counter-cases,
+and a mix of `human:` / `job:` / `agent:` verification where the tier actually
+changes how much you should trust the claim.
+
+It is deliberately not a manual. The README explains okflify; the example shows
+OKF carrying real knowledge, including an agent-verified page that argues against
+its own author.
 
 ```
 okflify → bundle/okflify.html — 9 documents, 7 edges, 13 diagrams

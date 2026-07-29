@@ -70,9 +70,9 @@ class TestDiscover:
 class TestBuild:
     def test_example_bundle(self, tmp_path):
         r = build(EXAMPLE, tmp_path / "out.html")
-        assert r["docs"] == 8
-        # 12 not 10 — the section-hop fix. A drop here means that bug is back.
-        assert r["edges"] == 12
+        assert r["docs"] == 6
+        # A drop below this means the section-hop resolver bug is back.
+        assert r["edges"] == 7
         assert r["out"].is_file()
 
     def test_output_is_self_contained(self, tmp_path):
@@ -82,7 +82,7 @@ class TestBuild:
         assert html.startswith("<!doctype html>")
         assert "__DOCS__" not in html and "__PRIMARY__" not in html   # all placeholders filled
         assert 'id="treehost"' in html and 'data-nav="tree"' in html  # tree view present
-        assert "human:daniel" in html                                  # trust tiers rendered
+        assert "human:daniel" in html  # trust tiers rendered                                  # trust tiers rendered
 
     def test_empty_directory_fails_loudly(self, tmp_path):
         try:

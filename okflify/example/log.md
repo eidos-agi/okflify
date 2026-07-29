@@ -2,17 +2,16 @@
 
 | When | Who | Event | Concept / learning id |
 |------|-----|-------|------------------------|
-| 2026-07-29 | human:daniel | Asked for an example bundle shipped inside okflify, reachable from the sidebar | `index` |
-| 2026-07-29 | agent:claude | Wrote the docs AS a bundle rather than about one — documentation that cannot drift from the tool | `index` |
-| 2026-07-29 | agent:claude | Cross-linked the concepts deliberately, after shipping a real bundle whose every edge left the index | `links-are-the-product` |
+| 2026-07-29 | human:daniel | "poor rendering quality" — with a screenshot | — |
+| 2026-07-29 | agent:claude | Measured rather than guessed: label 7.2px effective, scale 0.51 | `evidence/measurements` |
+| 2026-07-29 | agent:claude | Cause: `width:100%` shrinks a diagram wider than its column, text with it | `fit-to-width-shrinks-text` |
+| 2026-07-29 | job:okflify-build | Fix verified: 7.2px → 14px, scale 0.51 → 1.00 | `evidence/measurements` |
+| 2026-07-29 | human:daniel | Confirmed readable on screen — the check that actually decided it | `measure-what-the-eye-judges` |
 
 ---
 
-## Why this bundle exists
+## Why this is the example bundle
 
-Documentation about a format tends to drift from the tool that reads it. This
-bundle cannot: it is built by the tool, on every release, and a broken renderer
-means a broken page.
-
-It is also the smallest honest test. If okflify cannot make four concepts and a
-handful of links legible, it will not survive a hundred.
+It is small, real, and every number in it was measured. Nothing here is
+illustrative or invented — which matters, because a bundle demonstrating a
+format built around verification cannot itself be fabricated.

@@ -1,69 +1,61 @@
 ---
 okf_version: "0.2"
 type: investigation
-title: "How okflify works — a bundle that is its own documentation"
-status: open
+title: "Why were the diagrams unreadable?"
+status: closed
 slug: example
 started: 2026-07-29
-tags: [okf, okflify, example, documentation]
+tags: [rendering, mermaid, typography, example]
 sources:
   - repo: eidos-agi/okflify
-  - spec: "https://cloud.google.com/blog/products/data-analytics/okf-v0-2-adds-trust-signals"
 verified:
   by: job:okflify-build
   at: 2026-07-29
-  method: "this page is rendered by the tool it documents — if okflify breaks, this page does not build"
+  method: "every number below was measured in a headless browser; the commands are in the evidence page"
 ---
 
 # Investigation
 
 ## Question
 
-What does an Open Knowledge Format v0.2 bundle look like, and what does okflify do with one?
+Diagrams on a documentation site were technically rendering — no errors, correct
+shapes — and nobody could read the labels. Why?
 
 ## Why it matters
 
-OKF is easy to describe and hard to picture. Reading a spec tells you a bundle is
-"markdown files with YAML frontmatter"; it does not tell you what a **trust tier**
-buys you, or why the folder tree is the least interesting thing about it.
+The failure was invisible to every check we had. The build passed. The DOM
+assertions passed. A human looked at a screenshot and said *"this is unreadable,"*
+which is the only test that caught it.
 
-So this bundle documents okflify **by being** an okflify bundle. Everything you see
-— the sidebar, the trust card above this text, the graph, the tree — is this
-directory, rendered by the tool. There is no separate documentation to drift.
+This bundle is a real, small investigation, kept as okflify's example because it
+shows the format doing its actual job: separating **what we measured** from
+**what we assumed**.
 
-## Scope
+## Answer
 
-| In | Out |
-|----|-----|
-| What a bundle is, what okflify renders | The full OKF spec — linked, not restated |
-| The trust model, because it is the point | Authoring advice — write what is true |
+**7.2 pixels.** Labels were rendering at 7.2px effective size — a 1280px-wide
+diagram forced into a 702px column at 0.51 scale, with 14px text scaled down
+with it.
 
-## Status
-
-- **Now:** ships inside the repo at `example/`. Build it yourself in one command.
-- **Next experiment:** point okflify at your own notes and see how thin the link graph is. That number is usually a surprise.
+The CSS said `width: 100%`. That reads like *"make it fit"* and it does — by
+shrinking a diagram that was already too wide, along with every label on it.
 
 ## Concepts
 
 | Read | For |
 |------|-----|
-| [what-is-a-bundle](concepts/what-is-a-bundle.md) | The five parts, and which are optional |
-| [trust-tiers](concepts/trust-tiers.md) | `human: > job: > agent:` and why it is the whole point |
-| [graph-not-tree](concepts/graph-not-tree.md) | Why directories lie about structure |
-| [what-okflify-renders](concepts/what-okflify-renders.md) | Every feature, and how to reach it |
+| [fit-to-width-shrinks-text](concepts/fit-to-width-shrinks-text.md) | The mechanism, and when `width:100%` is wrong |
+| [passing-checks-missed-it](concepts/passing-checks-missed-it.md) | Why four green checks said nothing |
 
 ## Learnings
 
-- [links-are-the-product](learnings/links-are-the-product.md) — the lesson that cost the most to learn
+- [measure-what-the-eye-judges](learnings/measure-what-the-eye-judges.md)
 
-## Evidence index
+## Evidence
 
-| Artifact | Path | Role |
-|----------|------|------|
-| This page | you are reading it | The tool renders its own documentation |
-| Build output | [`evidence/build-output.md`](evidence/build-output.md) | Counts from a real run |
+- [measurements](evidence/measurements.md) — the browser commands and their output
 
 ## Citations
 
-- Google [OKF spec](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
+- [Mermaid](https://mermaid.js.org) sizing behaviour
 - [OKF v0.2 trust signals](https://cloud.google.com/blog/products/data-analytics/okf-v0-2-adds-trust-signals)
