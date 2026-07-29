@@ -1,0 +1,47 @@
+{
+  "approval_gates": [
+    "credentials",
+    "payments",
+    "production mutations",
+    "public publish/tag",
+    "customer/outbound messaging"
+  ],
+  "artifact_types": [
+    "docs",
+    "python-package"
+  ],
+  "description": "okflify: converts OKF v0.2 bundles into one self-contained HTML file. Python package, MIT, public GitHub repo eidos-agi/okflify. Releases = git push to master; consumers pip install -e from source.",
+  "distribution_channels": [
+    "PyPI or uvx"
+  ],
+  "forge_stack": [
+    "forge-forge",
+    "ship-forge",
+    "security-forge",
+    "learning-forge",
+    "loss-forge"
+  ],
+  "learning_questions": [
+    "What broke or slowed this release?",
+    "What proof was missing until late?",
+    "Which gate should become automatic next time?",
+    "Which human approval should remain explicit?"
+  ],
+  "memory_paths": {
+    "attempts_dir": ".shipr/release-attempts",
+    "model": ".shipr/product-release-model.json"
+  },
+  "product_id": "okflify",
+  "project_root": "/Users/dshanklinbv/repos-eidos-agi/okflify",
+  "proof_commands": [
+    "python -m pytest -q",
+    "python -m ruff check .",
+    "python -m ruff format --check .",
+    "verify README, changelog, and release notes match artifact version"
+  ],
+  "rollback_paths": [
+    "bump patch version and release a fixed package; yank only for severe package faults"
+  ],
+  "schema_version": 1,
+  "updated_at": "2026-07-29T16:34:37.754839+00:00"
+}

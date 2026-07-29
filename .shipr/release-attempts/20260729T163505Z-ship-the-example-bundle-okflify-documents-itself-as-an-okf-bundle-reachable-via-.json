@@ -1,0 +1,54 @@
+{
+  "blocker_records": [],
+  "blockers": [],
+  "created_at": "2026-07-29T16:35:05.492346+00:00",
+  "gate_summary": [],
+  "goal": "Ship the example bundle: okflify documents itself as an OKF bundle, reachable via --example and from the rendered sidebar",
+  "learning_prompts": [
+    "What broke or slowed this release?",
+    "What proof was missing until late?",
+    "Which gate should become automatic next time?",
+    "Which human approval should remain explicit?"
+  ],
+  "next_actions": [
+    "request explicit human approval for public publish/deploy if needed",
+    "record shipped or rolled_back after the irreversible step"
+  ],
+  "notes": "Example bundle (8 docs, 12 edges, density 0.43) + --example flag + README quickstart. Writing it exposed and fixed a resolver bug: '../learnings/x.md' (section hop) was resolved as a bundle hop, silently dropping 2 edges. PROOF GAP: shipr's model names pytest + ruff; neither is installed in this env, so neither ran. The repo has no test suite \u2014 that is a real gap, not a passing one.",
+  "product_id": "okflify",
+  "proofs": [
+    "python -m okflify --example -> 8 documents, 12 edges, 1 diagram; python -m okflify <arp catalogue> -> 102 documents, 88 edges (no regression); Chromium via playwright: 10 nav items, trust card 'human:daniel \u00b7 rule', 3 backlink cards, agent-warning callout renders"
+  ],
+  "release_model_snapshot": {
+    "approval_gates": [
+      "credentials",
+      "payments",
+      "production mutations",
+      "public publish/tag",
+      "customer/outbound messaging"
+    ],
+    "artifact_types": [
+      "docs",
+      "python-package"
+    ],
+    "distribution_channels": [
+      "PyPI or uvx"
+    ],
+    "forge_stack": [
+      "forge-forge",
+      "ship-forge",
+      "security-forge",
+      "learning-forge",
+      "loss-forge"
+    ],
+    "proof_commands": [
+      "python -m pytest -q",
+      "python -m ruff check .",
+      "python -m ruff format --check .",
+      "verify README, changelog, and release notes match artifact version"
+    ]
+  },
+  "schema_version": 1,
+  "source": null,
+  "status": "ready"
+}

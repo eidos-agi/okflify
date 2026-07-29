@@ -1,0 +1,54 @@
+{
+  "blocker_records": [],
+  "blockers": [],
+  "created_at": "2026-07-29T16:35:35.327461+00:00",
+  "gate_summary": [],
+  "goal": "Ship the example bundle: okflify documents itself as an OKF bundle",
+  "learning_prompts": [
+    "What broke or slowed this release?",
+    "What proof was missing until late?",
+    "Which gate should become automatic next time?",
+    "Which human approval should remain explicit?"
+  ],
+  "next_actions": [
+    "route lessons to learning-forge",
+    "watch rollback and support signals"
+  ],
+  "notes": "Pushed b2e59cd..4c4d90f to eidos-agi/okflify master via Hancock, since shipr's model lists 'public publish/tag' as an approval gate. LEARNINGS \u2014 (1) What broke: nothing at ship time, but the evidence page nearly shipped invented counts; chasing a 12-vs-10 edge discrepancy exposed a real resolver bug. Numbers you did not measure are how bugs hide. (2) Proof missing until late: pytest and ruff are named in the release model and NEITHER IS INSTALLED; the repo has no test suite, so 3 of 4 named proofs are aspirational. The proof that actually held was a build + a DOM assertion in a real browser. (3) Gate that should become automatic: the build must run on both the example bundle AND a large catalogue before any push \u2014 that pair caught the regression risk. (4) Approval that must stay explicit: the public push. It reached the internet on a human signature and should keep doing so.",
+  "product_id": "okflify",
+  "proofs": [
+    "Hancock req_1785342912efdeaaf8197b APPROVED_AND_RAN exit 0; git push b2e59cd..4c4d90f master; verify: git ls-remote origin master"
+  ],
+  "release_model_snapshot": {
+    "approval_gates": [
+      "credentials",
+      "payments",
+      "production mutations",
+      "public publish/tag",
+      "customer/outbound messaging"
+    ],
+    "artifact_types": [
+      "docs",
+      "python-package"
+    ],
+    "distribution_channels": [
+      "PyPI or uvx"
+    ],
+    "forge_stack": [
+      "forge-forge",
+      "ship-forge",
+      "security-forge",
+      "learning-forge",
+      "loss-forge"
+    ],
+    "proof_commands": [
+      "python -m pytest -q",
+      "python -m ruff check .",
+      "python -m ruff format --check .",
+      "verify README, changelog, and release notes match artifact version"
+    ]
+  },
+  "schema_version": 1,
+  "source": null,
+  "status": "shipped"
+}

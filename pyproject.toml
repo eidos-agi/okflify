@@ -6,6 +6,9 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
 keywords = ["okf", "open-knowledge-format", "documentation", "knowledge-graph"]
 
 [project.scripts]
