@@ -158,9 +158,12 @@ def collect(bundle: pathlib.Path):
 
     add(bundle / "index.md", "Bundle")
     add(bundle / "log.md", "Bundle")
-    for g, d in (("Concepts", "concepts"), ("Evidence", "evidence"), ("Learnings", "learnings")):
-        for pth in sorted((bundle / d).glob("*.md")):
-            add(pth, g)
+    # Every subdirectory holding markdown is a concept group. The old hardcoded
+    # (concepts, evidence, learnings) tuple silently dropped facts/ — six fact
+    # files, including a pack's founding document, rendered as dead links.
+    for d in sorted(p for p in bundle.iterdir() if p.is_dir()):
+        for pth in sorted(d.glob("*.md")):
+            add(pth, d.name.replace("-", " ").title())
     return docs
 
 
