@@ -382,7 +382,7 @@ document.documentElement.dataset.decor="__DECOR__";
 /* nav */
 const G0=[];DOCS.forEach(d=>{let g=G0.find(x=>x.n===d.group);if(!g){g={n:d.group,i:[]};G0.push(g)}g.i.push(d)});
 function nav(f=""){const q=f.toLowerCase();
- let h=`<div class="sec">${svg(GI.Overview,15)}Overview</div><a class="n" href="#graph" data-nav="graph">Knowledge graph</a>${MULTI?'<a class="n" href="#tree" data-nav="tree">Tree</a>':""}`;
+ let h=`<div class="sec">${svg(GI.Overview,15)}Overview</div><a class="n" href="#graph" data-nav="graph">Knowledge graph</a><a class="n" href="#tree" data-nav="tree">Tree</a>`;
  let hits=0;
  h+=G0.map(g=>{const it=g.i.filter(d=>!q||d.title.toLowerCase().includes(q)||d.slug.includes(q)||String(d.tags||"").toLowerCase().includes(q));
    hits+=it.length;if(!it.length)return"";
@@ -452,7 +452,8 @@ document.querySelectorAll(".ci").forEach(e=>e.innerHTML=svg(e.dataset.i,17));
 function buildTree(){
   const host=document.getElementById("treehost"); if(!host) return;
   const bundles={};
-  DOCS.forEach(d=>{const b=d.bundle||"(bundle)";const k=d.section||d.group;
+  const single=(DOCS.find(d=>d.slug==="index")||DOCS[0]||{}).title||"This bundle";
+  DOCS.forEach(d=>{const b=d.bundle||single;const k=d.section||d.group;
     bundles[b]=bundles[b]||{}; (bundles[b][k]=bundles[b][k]||[]).push(d)});
   const ORDER=["Bundle","Concepts","Evidence","Learnings"];
   const names=Object.keys(bundles).sort();

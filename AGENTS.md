@@ -49,3 +49,17 @@ those colours reaching the screen — see the `data-processed` note in README.
 | Mermaid `neutral` / `dark` themes | Dark fills, dark labels. Use `theme:"base"` + `themeVariables`. |
 | A bundle with no cross-links | Renders a star. That is the bundle's problem, not the renderer's — say so rather than papering over it. |
 | `file://` in Chrome extensions | Blocked. Use mafia, or serve over `http.server`. |
+
+## Versioning — every shipment bumps
+
+**One shipment, one version.** Any push to `master` that changes `okflify/`
+increments the patch number in `pyproject.toml`. No exceptions and no batching:
+okflify shipped eleven times at `0.1.0`, which made "which version has the fix"
+unanswerable and would have been unrecoverable on PyPI, where a version number
+can never be reused.
+
+CI enforces it — the `version` job fails if `okflify/**` changed against
+`origin/master` and the version did not.
+
+`okflify/__init__.py` does not hard-code the number; it reads installed package
+metadata, so the two can never disagree.

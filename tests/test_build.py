@@ -91,3 +91,20 @@ class TestBuild:
             assert "no OKF documents" in str(e)
         else:
             raise AssertionError("an empty directory must not build silently")
+
+
+class TestVersioning:
+    def test_version_is_single_sourced(self):
+        """__init__ must not hard-code a number that can drift from pyproject."""
+        import re
+        src = (ROOT / "okflify" / "__init__.py").read_text()
+        assert "importlib.metadata" in src, "version must come from package metadata"
+        # a literal is fine ONLY as the not-installed sentinel
+        for lit in re.findall(r'__version__ = "([^"]+)"', src):
+            assert lit.endswith("+source"), f"hard-coded release version: {lit}"
+
+    def test_pyproject_has_a_version(self):
+        import re
+        txt = (ROOT / "pyproject.toml").read_text()
+        m = re.search(r'^version = "(\d+\.\d+\.\d+)"', txt, re.M)
+        assert m, "pyproject version missing or malformed"

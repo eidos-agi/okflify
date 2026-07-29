@@ -61,6 +61,30 @@ jobs:
           print("artifact ok")
           PY
 
+  version:
+    name: version bumped
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/master' || github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: a source change must bump the version
+        # okflify shipped 11 times at 0.1.0. On PyPI a version can never be
+        # reused, so "which version has the fix" has to stay answerable.
+        run: |
+          set -euo pipefail
+          git fetch -q origin master || exit 0
+          if git diff --quiet origin/master...HEAD -- okflify/; then
+            echo "no source change — version bump not required"; exit 0
+          fi
+          before=$(git show origin/master:pyproject.toml | sed -n 's/^version = "\(.*\)"/\1/p' | head -1)
+          after=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)
+          echo "version: $before -> $after"
+          if [ "$before" = "$after" ]; then
+            echo "::error::okflify/ changed but pyproject version is still $after — bump it"
+            exit 1
+          fi
+
   pages:
     name: publish demo
     if: github.ref == 'refs/heads/master'
