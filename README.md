@@ -46,7 +46,9 @@ Cytoscape + fCoSE: directed edges, overlap-aware layout, hover to light the neig
 
 <img src="https://raw.githubusercontent.com/eidos-agi/okflify/master/assets/tree.png" alt="Tree view grouped by bundle, showing type and trust tier per document" width="100%"/>
 
-Bundle → section → document, collapsible, with the **type and trust tier of every document at a glance** — which the sidebar doesn't carry. Shown above: 18 bundles, 102 documents, 88 edges in one catalogue.
+Bundle → section → document, collapsible, with the **type and trust tier of every document at a glance** — which the sidebar doesn't carry.
+
+Above is a four-bundle catalogue. The largest it has been run against is 18 bundles / 102 documents / 88 edges, rendered into a single file.
 
 ## Diagram surfing
 
