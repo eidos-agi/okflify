@@ -1,0 +1,54 @@
+{
+  "blocker_records": [],
+  "blockers": [],
+  "created_at": "2026-07-29T16:36:54.625597+00:00",
+  "gate_summary": [],
+  "goal": "Close the proof gap shipr surfaced: okflify's first test suite",
+  "learning_prompts": [
+    "What broke or slowed this release?",
+    "What proof was missing until late?",
+    "Which gate should become automatic next time?",
+    "Which human approval should remain explicit?"
+  ],
+  "next_actions": [
+    "route lessons to learning-forge",
+    "watch rollback and support signals"
+  ],
+  "notes": "12 tests, all regressions for bugs from this session. Answering shipr's learning_questions: the gate that should become automatic is 'the named proof commands must actually exist' \u2014 a release model naming pytest when no suite exists is worse than naming none, because the gap only appears when someone checks. Recording PROOF GAP on the prior attempt is what made it fixable.",
+  "product_id": "okflify",
+  "proofs": [
+    "pytest tests/ -q -> 12 passed in 0.07s; Hancock req_17853429918ead242bbca7 APPROVED_AND_RAN; pushed 4c4d90f..c5f683b"
+  ],
+  "release_model_snapshot": {
+    "approval_gates": [
+      "credentials",
+      "payments",
+      "production mutations",
+      "public publish/tag",
+      "customer/outbound messaging"
+    ],
+    "artifact_types": [
+      "docs",
+      "python-package"
+    ],
+    "distribution_channels": [
+      "PyPI or uvx"
+    ],
+    "forge_stack": [
+      "forge-forge",
+      "ship-forge",
+      "security-forge",
+      "learning-forge",
+      "loss-forge"
+    ],
+    "proof_commands": [
+      "python -m pytest -q",
+      "python -m ruff check .",
+      "python -m ruff format --check .",
+      "verify README, changelog, and release notes match artifact version"
+    ]
+  },
+  "schema_version": 1,
+  "source": null,
+  "status": "shipped"
+}

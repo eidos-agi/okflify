@@ -5,4 +5,6 @@ dist/
 build/
 *.html
 !okflify/template.html
+# the rendered example IS the demo — it must be viewable without installing
+!docs/index.html
 .DS_Store

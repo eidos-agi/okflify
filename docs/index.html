@@ -1,0 +1,719 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How okflify works — a bundle that is its own documentation · okflify</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+:root{
+  --p:#2E6F5E; --pl:#6FC7AC; --pd:#1F5044;
+  --bg:#fff; --raise:#fafafa; --ink:#18181b; --ink2:#3f3f46; --mut:#71717a; --faint:#a1a1aa;
+  --line:#e8e8eb; --line2:#f4f4f5; --acc:var(--p); --accbg:color-mix(in srgb,var(--p) 8%,transparent);
+  --human:#15803d; --job:#b45309; --agent:#8b8b93;
+  --r:12px; --sh:0 1px 3px rgba(0,0,0,.04),0 8px 24px -8px rgba(0,0,0,.06);
+  --fb:"Inter",ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --fh:"Inter",var(--fb);
+}
+html[data-t="dark"]{
+  --bg:#09090b; --raise:#111113; --ink:#fafafa; --ink2:#c8c8ce; --mut:#8b8b93; --faint:#63636b;
+  --line:#232326; --line2:#161619; --acc:var(--pl); --accbg:color-mix(in srgb,var(--pl) 11%,transparent);
+  --human:#4ade80; --job:#fbbf24; --agent:#8b8b93;
+  --sh:0 1px 3px rgba(0,0,0,.5),0 8px 28px -10px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink2);font:400 16px/1.75 var(--fb);
+ -webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+::selection{background:var(--accbg);color:var(--ink)}
+a{color:var(--acc);text-decoration:none}
+svg{flex:none}
+
+/* decoration */
+body::before{content:"";position:fixed;inset:0 0 auto;height:340px;pointer-events:none;z-index:0;
+ background:radial-gradient(70% 100% at 50% 0%,color-mix(in srgb,var(--p) 9%,transparent),transparent 72%)}
+html[data-decor="grid"] body::before{
+ background:linear-gradient(var(--line2) 1px,transparent 1px),linear-gradient(90deg,var(--line2) 1px,transparent 1px);
+ background-size:44px 44px;height:100%;opacity:.55;mask-image:linear-gradient(#000,transparent 55%)}
+html[data-decor="none"] body::before{display:none}
+
+/* top bar */
+header{position:sticky;top:0;z-index:40;height:60px;flex:none;display:flex;align-items:center;
+ gap:1rem;padding:0 1.6rem;border-bottom:1px solid var(--line);
+ background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.8) blur(14px)}
+.logo{display:flex;align-items:center;gap:.55rem;font:600 .95rem/1 var(--fh);color:var(--ink);
+ letter-spacing:-.018em;white-space:nowrap}
+.mark{width:22px;height:22px;border-radius:6px;background:linear-gradient(140deg,var(--p),var(--pl));
+ display:grid;place-items:center;color:#fff;font:700 11px/1 var(--fb)}
+.ver{font:500 .66rem/1 ui-monospace,monospace;color:var(--acc);background:var(--accbg);
+ padding:.3rem .5rem;border-radius:99px;letter-spacing:.03em;white-space:nowrap}
+.grow{flex:1}
+.srch{position:relative;width:270px;max-width:34vw}
+.srch input{width:100%;height:34px;padding:0 .7rem 0 2.1rem;font:inherit;font-size:.84rem;
+ background:var(--raise);border:1px solid var(--line);border-radius:9px;color:var(--ink);transition:.15s}
+.srch input:focus{outline:0;border-color:var(--acc);box-shadow:0 0 0 3px var(--accbg);background:var(--bg)}
+.srch svg{position:absolute;left:.65rem;top:9px;color:var(--faint)}
+.ib{height:34px;padding:0 .7rem;display:inline-flex;align-items:center;gap:.35rem;font:500 .8rem/1 var(--fb);
+ border:1px solid var(--line);background:var(--raise);color:var(--ink2);border-radius:9px;cursor:pointer;transition:.15s}
+.ib:hover{border-color:var(--acc);color:var(--acc)}
+
+.shell{flex:1;display:flex;min-height:0;position:relative;z-index:1}
+
+/* sidebar — deliberately clean: no badges per row */
+aside{width:266px;flex:none;padding:1.9rem 1rem 5rem 1.6rem;overflow-y:auto;
+ height:calc(100vh - 60px);position:sticky;top:60px;scrollbar-width:thin}
+.sec{display:flex;align-items:center;gap:.5rem;margin:1.7rem 0 .5rem;color:var(--ink);
+ font:600 .8rem/1 var(--fb);letter-spacing:-.01em}
+.sec:first-child{margin-top:0}
+.sec svg{color:var(--mut)}
+aside a.n{display:block;padding:.35rem .6rem;margin-left:.15rem;border-radius:7px;color:var(--mut);
+ font-size:.875rem;line-height:1.5;transition:color .13s,background .13s}
+aside a.n:hover{color:var(--ink);background:var(--line2)}
+aside a.n.on{color:var(--acc);font-weight:550;background:var(--accbg)}
+.empty{padding:.4rem .6rem;color:var(--faint);font-size:.82rem}
+
+/* content */
+main{flex:1;min-width:0;overflow-y:auto;height:calc(100vh - 60px);scroll-behavior:smooth}
+.cols{display:flex;gap:3rem;max-width:74rem;margin:0 auto;padding:2.8rem 3rem 9rem;align-items:flex-start}
+.body{flex:1;min-width:0;max-width:44rem}
+.rail{width:186px;flex:none;position:sticky;top:1rem;font-size:.8rem;
+ max-height:calc(100vh - 9rem);overflow-y:auto;overflow-x:hidden}
+.rail .rh{display:flex;gap:.45rem;align-items:center;color:var(--ink);font:600 .78rem/1 var(--fb);margin-bottom:.75rem}
+.rail a{display:flex;gap:.5rem;align-items:baseline;padding:.26rem 0;color:var(--mut);
+ line-height:1.45;transition:color .13s;overflow-wrap:anywhere;hyphens:auto}
+.rail a::before{content:"";width:5px;height:5px;border-radius:50%;background:transparent;flex:none;transform:translateY(-1px)}
+.rail a:hover{color:var(--ink)}
+.rail a.here{color:var(--acc)} .rail a.here::before{background:var(--acc)}
+.rail a.l3{padding-left:.95rem;font-size:.765rem}
+
+.doc{display:none;animation:fi .24s ease}
+.doc.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.eyebrow{color:var(--acc);font:550 .82rem/1 var(--fb);letter-spacing:-.005em;margin-bottom:.7rem}
+
+/* prose — Mintlify weights: light headings, roomy body */
+h1{font:600 2.45rem/1.15 var(--fh);letter-spacing:-.038em;color:var(--ink);margin:0 0 .55rem}
+h2{font:600 1.5rem/1.3 var(--fh);letter-spacing:-.025em;color:var(--ink);margin:3.2rem 0 .9rem;scroll-margin-top:2rem}
+h3{font:600 1.13rem/1.4 var(--fh);letter-spacing:-.016em;color:var(--ink);margin:2.2rem 0 .6rem;scroll-margin-top:2rem}
+h4{font:600 .95rem/1.5 var(--fb);color:var(--ink);margin:1.6rem 0 .4rem}
+p{margin:.95rem 0;color:var(--ink2);font-size:1rem}
+strong{color:var(--ink);font-weight:600}
+.body>p:first-of-type,.eyebrow+h1+p{font-size:1.08rem;color:var(--mut)}
+ul,ol{margin:.85rem 0;padding-left:1.3rem}
+li{margin:.38rem 0;color:var(--ink2)}li::marker{color:var(--faint)}
+hr{border:0;border-top:1px solid var(--line);margin:2.6rem 0}
+code{font:.86em ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--line2);color:var(--ink);
+ padding:.15em .4em;border-radius:5px;border:1px solid var(--line)}
+pre{background:var(--raise);border:1px solid var(--line);border-radius:var(--r);padding:1.05rem 1.2rem;
+ overflow-x:auto;font-size:.82rem;line-height:1.7;box-shadow:var(--sh);margin:1.3rem 0}
+pre code{background:none;border:0;padding:0}
+.tw{overflow-x:auto;margin:1.4rem 0;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+table{border-collapse:collapse;width:100%;font-size:.87rem}
+th,td{padding:.68rem .95rem;text-align:left;vertical-align:top;border-bottom:1px solid var(--line2)}
+th{background:var(--raise);color:var(--ink);font:600 .74rem/1.5 var(--fb);text-transform:uppercase;
+ letter-spacing:.06em;white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--line2)}
+.mermaid{background:var(--raise);border:1px solid var(--line);border-radius:var(--r);padding:1.5rem;
+ margin:1.6rem 0;text-align:center;overflow-x:auto;box-shadow:var(--sh)}
+/* mermaid emits an inline max-width at the diagram's natural size, which is
+   often far narrower than the column — the result is unreadably small. Let it
+   fill the column; the lightbox handles anything still too dense. */
+.mermaid svg{width:100%!important;max-width:100%!important;height:auto}
+
+/* callouts */
+.cal{display:flex;gap:.75rem;padding:.95rem 1.1rem;border-radius:var(--r);margin:1.4rem 0;
+ border:1px solid;font-size:.93rem;line-height:1.65}
+.cal p{margin:.25rem 0;color:inherit}.cal p:first-child{margin-top:0}.cal p:last-child{margin-bottom:0}
+.cal .ci{width:17px;height:17px;flex:none;margin-top:.22rem}
+.cal-note{background:color-mix(in srgb,#3b82f6 7%,transparent);border-color:color-mix(in srgb,#3b82f6 24%,transparent);color:var(--ink2)}
+.cal-note .ci{color:#3b82f6}
+.cal-info{background:color-mix(in srgb,#8b5cf6 7%,transparent);border-color:color-mix(in srgb,#8b5cf6 24%,transparent);color:var(--ink2)}
+.cal-info .ci{color:#8b5cf6}
+.cal-tip{background:color-mix(in srgb,#14b8a6 7%,transparent);border-color:color-mix(in srgb,#14b8a6 24%,transparent);color:var(--ink2)}
+.cal-tip .ci{color:#14b8a6}
+.cal-check{background:color-mix(in srgb,#22c55e 8%,transparent);border-color:color-mix(in srgb,#22c55e 26%,transparent);color:var(--ink2)}
+.cal-check .ci{color:#22c55e}
+.cal-warn{background:color-mix(in srgb,#f59e0b 9%,transparent);border-color:color-mix(in srgb,#f59e0b 28%,transparent);color:var(--ink2)}
+.cal-warn .ci{color:#f59e0b}
+.cal-danger{background:color-mix(in srgb,#ef4444 8%,transparent);border-color:color-mix(in srgb,#ef4444 28%,transparent);color:var(--ink2)}
+.cal-danger .ci{color:#ef4444}
+
+/* trust */
+.trust{border:1px solid var(--line);border-radius:var(--r);background:var(--raise);box-shadow:var(--sh);
+ padding:.9rem 1.1rem;margin:0 0 2.4rem;font-size:.83rem}
+.trust .hd{display:flex;align-items:center;gap:.5rem;margin-bottom:.55rem;
+ font:600 .72rem/1 var(--fb);text-transform:uppercase;letter-spacing:.08em;color:var(--faint)}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.dot.human{background:var(--human)}.dot.job{background:var(--job)}.dot.agent{background:var(--agent)}
+.trust dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:.22rem .95rem}
+.trust dt{color:var(--faint);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;line-height:1.85}
+.trust dd{margin:0;color:var(--ink2);font:.76rem/1.7 ui-monospace,monospace}
+.trust .fl{margin-top:.7rem;padding-top:.7rem;border-top:1px dashed var(--line);
+ color:var(--mut);font:.8rem/1.6 var(--fb)}
+
+/* relations */
+.rel{margin-top:3.4rem;padding-top:1.8rem;border-top:1px solid var(--line)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:.8rem;margin:.8rem 0 1.6rem}
+.card{display:block;padding:.85rem 1rem;border:1px solid var(--line);border-radius:var(--r);
+ background:var(--raise);transition:.16s}
+.card:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:var(--sh)}
+.card .t{color:var(--ink);font:550 .875rem/1.4 var(--fb);margin-bottom:.3rem}
+.card .m{display:flex;gap:.4rem;align-items:center;color:var(--faint);font-size:.72rem}
+
+/* graph */
+#gw{border:1px solid var(--line);border-radius:var(--r);background:var(--raise);box-shadow:var(--sh);
+ overflow:hidden;margin:1.6rem 0}
+#graph{display:block;width:100%;height:540px;cursor:grab}#graph:active{cursor:grabbing}
+#graph .link{stroke:var(--line);stroke-width:1.5}
+#graph .node circle{stroke:var(--bg);stroke-width:2.5;cursor:pointer}
+#graph .node text{font:500 11px var(--fb);fill:var(--mut);pointer-events:none;user-select:none}
+.gl{display:flex;gap:1.2rem;flex-wrap:wrap;padding:.75rem 1.1rem;border-top:1px solid var(--line);
+ font-size:.75rem;color:var(--mut);background:var(--bg)}
+.gl span{display:flex;gap:.4rem;align-items:center}
+
+
+
+/* ── command palette ───────────────────────────────────────── */
+#cmdk{position:fixed;inset:0;z-index:300;display:none;background:rgba(0,0,0,.42);backdrop-filter:blur(3px)}
+#cmdk.on{display:block}
+#cmdbox{position:absolute;left:50%;top:15vh;transform:translateX(-50%);width:min(620px,92vw);
+ background:var(--bg);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 70px -12px rgba(0,0,0,.4);overflow:hidden}
+#cmdin{width:100%;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);
+ font:400 1.02rem/1 var(--fb);padding:1.05rem 1.15rem;outline:0}
+#cmdlist{max-height:52vh;overflow-y:auto;padding:.4rem}
+.cmdi{display:flex;gap:.7rem;align-items:baseline;padding:.55rem .75rem;border-radius:8px;cursor:pointer}
+.cmdi.sel{background:var(--accbg)}
+.cmdi .ct{color:var(--ink);font-size:.9rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmdi.sel .ct{color:var(--acc);font-weight:550}
+.cmdi .cg{color:var(--faint);font-size:.72rem;white-space:nowrap}
+.cmdi .cs{color:var(--mut);font-size:.76rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cmdfoot{border-top:1px solid var(--line);padding:.5rem .9rem;color:var(--faint);font-size:.72rem;display:flex;gap:.9rem}
+#cmdfoot kbd{font:600 .66rem/1 ui-monospace,monospace;background:var(--line2);border:1px solid var(--line);
+ border-radius:4px;padding:.14em .34em;color:var(--ink2)}
+.cmdempty{padding:1.4rem;color:var(--faint);font-size:.86rem;text-align:center}
+
+/* ── copy page menu ────────────────────────────────────────── */
+.titlerow{display:flex;align-items:flex-start;gap:1.5rem;position:relative;margin-bottom:1.6rem}
+.titlerow h1{flex:1;min-width:0;margin:0}
+.titlerow .pgacts{flex:none;margin-top:.55rem}
+.pgacts{display:flex;position:relative;z-index:6}
+.pgbtn{height:34px;padding:0 .7rem;display:inline-flex;align-items:center;gap:.4rem;font:500 .8rem/1 var(--fb);
+ border:1px solid var(--line);background:var(--raise);color:var(--ink2);cursor:pointer;transition:.14s}
+.pgbtn:first-child{border-radius:9px 0 0 9px}
+.pgbtn:last-child{border-radius:0 9px 9px 0;border-left:0;padding:0 .45rem}
+.pgbtn:hover{color:var(--acc);border-color:var(--acc)}
+.pgmenu{position:absolute;right:0;top:42px;width:300px;background:var(--bg);border:1px solid var(--line);
+ border-radius:12px;box-shadow:0 18px 50px -12px rgba(0,0,0,.35);padding:.35rem;display:none;z-index:7}
+.pgmenu.on{display:block}
+.pgmenu button{display:flex;gap:.7rem;align-items:flex-start;width:100%;text-align:left;border:0;
+ background:none;padding:.55rem .6rem;border-radius:8px;cursor:pointer;color:var(--ink)}
+#pgmenu button:hover{background:var(--line2)}
+.pgmenu .mi{width:26px;height:26px;flex:none;display:grid;place-items:center;border:1px solid var(--line);
+ border-radius:7px;color:var(--mut);background:var(--raise)}
+.pgmenu .mt{display:block;font:550 .845rem/1.35 var(--fb)}
+.pgmenu .md{display:block;font:400 .745rem/1.4 var(--fb);color:var(--faint);margin-top:.15rem}
+.docwrap{position:relative}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(12px);opacity:0;
+ background:var(--ink);color:var(--bg);font:550 .82rem/1 var(--fb);padding:.6rem .95rem;border-radius:9px;
+ z-index:400;pointer-events:none;transition:.2s;box-shadow:var(--sh)}
+#toast.on{opacity:1;transform:translateX(-50%)}
+
+/* ── code copy ─────────────────────────────────────────────── */
+.pre-w{position:relative}
+.pre-w>.cpy{position:absolute;top:.5rem;right:.5rem;width:28px;height:28px;display:grid;place-items:center;
+ border:1px solid var(--line);background:var(--bg);color:var(--mut);border-radius:7px;cursor:pointer;
+ opacity:0;transition:.14s}
+.pre-w:hover>.cpy{opacity:1}
+.pre-w>.cpy:hover{color:var(--acc);border-color:var(--acc)}
+@media print{#cmdk,.pgacts,.pgmenu,#toast,.cpy{display:none!important}}
+
+
+/* ── tree view ─────────────────────────────────────────────── */
+.tree{font-size:.9rem;margin:1.2rem 0}
+.tnode{border-left:1px solid var(--line);margin-left:.55rem;padding-left:.9rem}
+.tbundle{margin:.15rem 0}
+.tsum{display:flex;align-items:center;gap:.5rem;padding:.34rem .5rem;border-radius:7px;cursor:pointer;
+ color:var(--ink);user-select:none}
+.tsum:hover{background:var(--line2)}
+.tsum .car{transition:transform .15s;color:var(--faint);flex:none}
+details[open]>.tsum .car{transform:rotate(90deg)}
+.tsum .nm{font-weight:560;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tsum .ct{font:500 .7rem/1 ui-monospace,monospace;color:var(--faint);flex:none}
+.tsec{font:600 .68rem/1 var(--fb);text-transform:uppercase;letter-spacing:.08em;color:var(--faint);
+ margin:.6rem 0 .25rem .5rem}
+a.tleaf{display:flex;align-items:center;gap:.5rem;padding:.3rem .5rem;border-radius:6px;color:var(--mut);
+ text-decoration:none;line-height:1.4}
+a.tleaf:hover{background:var(--line2);color:var(--ink)}
+a.tleaf .tt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+a.tleaf .tk{font:500 .66rem/1 ui-monospace,monospace;color:var(--faint);flex:none}
+.tbar{display:flex;gap:.5rem;margin:1rem 0}
+
+/* ── lightbox: Adobe-style diagram surfing ─────────────────── */
+.mermaid,figure img,.body img{cursor:zoom-in}
+#lb{position:fixed;inset:0;z-index:200;display:none;background:color-mix(in srgb,var(--bg) 93%,#000);
+ backdrop-filter:blur(6px)}
+#lb.on{display:block;animation:fi .16s ease}
+#lbstage{position:absolute;inset:0;overflow:hidden;cursor:grab}
+#lbstage.grab{cursor:grab}#lbstage.grabbing{cursor:grabbing}
+#lbinner{position:absolute;left:50%;top:50%;transform-origin:0 0;will-change:transform;
+ transition:transform .09s cubic-bezier(.22,.61,.36,1)}
+#lbinner.free{transition:none}
+#lbinner svg,#lbinner img{display:block;max-width:none;height:auto;filter:drop-shadow(0 12px 40px rgba(0,0,0,.28))}
+#lbbar{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;gap:.3rem;
+ align-items:center;background:var(--raise);border:1px solid var(--line);border-radius:11px;
+ padding:.34rem .4rem;box-shadow:var(--sh);z-index:2}
+#lbbar button{width:30px;height:28px;display:grid;place-items:center;border:0;background:none;
+ color:var(--mut);border-radius:7px;cursor:pointer;font:600 .78rem/1 var(--fb)}
+#lbbar button:hover{background:var(--line2);color:var(--ink)}
+#lbpct{min-width:52px;text-align:center;font:600 .74rem/1 ui-monospace,monospace;color:var(--ink);
+ padding:0 .2rem;cursor:default}
+#lbsep{width:1px;height:18px;background:var(--line);margin:0 .18rem}
+#lbclose{position:absolute;top:18px;right:20px;z-index:2;width:34px;height:34px;display:grid;
+ place-items:center;border:1px solid var(--line);background:var(--raise);color:var(--mut);
+ border-radius:9px;cursor:pointer;box-shadow:var(--sh)}
+#lbclose:hover{color:var(--acc);border-color:var(--acc)}
+#lbhint{position:absolute;top:18px;left:20px;z-index:2;font:.72rem/1.5 var(--fb);color:var(--faint);
+ background:var(--raise);border:1px solid var(--line);border-radius:9px;padding:.42rem .65rem;
+ box-shadow:var(--sh);max-width:min(52ch,60vw)}
+#lbhint kbd{font:600 .68rem/1 ui-monospace,monospace;background:var(--line2);color:var(--ink2);
+ border:1px solid var(--line);border-radius:4px;padding:.14em .34em;margin:0 .1em}
+@media print{#lb{display:none!important}}
+
+@media print{
+ header,aside,.rail,#gw,.rel{display:none!important}
+ body{display:block}body::before{display:none}
+ .shell{display:block}main{height:auto;overflow:visible}
+ .cols{display:block;max-width:none;padding:0}.body{max-width:none}
+ .doc{display:block!important;page-break-after:always;animation:none}
+ .doc:last-child{page-break-after:auto}
+ pre,table,.mermaid,.trust,.cal{break-inside:avoid}h1,h2,h3,h4{break-after:avoid}
+ a{color:inherit}@page{margin:15mm}
+}
+@media (max-width:1180px){.rail{display:none}.cols{padding:2.4rem}}
+@media (max-width:900px){
+ .shell{display:block}aside{width:auto;height:auto;position:static;border-bottom:1px solid var(--line);padding:1.2rem 1.4rem}
+ main{height:auto}.cols{padding:1.6rem 1.4rem 5rem}.srch{width:170px}
+}
+</style></head><body>
+
+<header>
+  <div class="logo"><span class="mark">A</span>okflify</div>
+  <span class="ver">OKF v0.2</span>
+  <div class="grow"></div>
+  <div class="srch">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+    <input id="q" type="search" placeholder="Search documentation…" autocomplete="off">
+  </div>
+  <button class="ib" id="th" title="Toggle theme">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9c-4.97 0-9-4.03-9-9Z"/></svg></button>
+  <a class="ib" href="https://github.com/eidos-agi/okflify" target="_blank" rel="noopener"
+     title="okflify — converts OKF bundles into HTML" style="text-decoration:none;gap:.4rem">
+     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.94.83.09-.65.35-1.09.63-1.34-2.22-.25-4.555-1.11-4.555-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>okflify</a>
+  <button class="ib" onclick="print()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M8 14h8v7H8z"/></svg>Print</button>
+</header>
+
+<div class="shell">
+  <aside id="nav"></aside>
+  <main><div class="cols"><div class="body" id="body"></div><div class="rail" id="rail"></div></div>
+    <footer style="max-width:74rem;margin:0 auto;padding:0 3rem 3rem;color:var(--faint);font-size:.78rem;
+      border-top:1px solid var(--line);padding-top:1.4rem">
+      Rendered by <strong style="color:var(--acc);font-weight:600">okflify</strong> — an app for reading
+      Open Knowledge Format v0.2 bundles. OKF is a graph, not a tree.
+    </footer>
+  </main>
+</div>
+
+<script>
+const DOCS=[{"slug": "index", "bundle": "", "group": "Bundle", "section": "Bundle", "file": "index.md", "title": "How okflify works \u2014 a bundle that is its own documentation", "type": "investigation", "status": "open", "tags": "[okf, okflify, example, documentation]", "verified": {"by": "job:okflify-build", "at": "2026-07-29", "method": "this page is rendered by the tool it documents \u2014 if okflify breaks, this page does not build"}, "html": "<h2>Question</h2>\n<p>What does an Open Knowledge Format v0.2 bundle look like, and what does okflify do with one?</p>\n<h2>Why it matters</h2>\n<p>OKF is easy to describe and hard to picture. Reading a spec tells you a bundle is</p>\n<p>&quot;markdown files with YAML frontmatter&quot;; it does not tell you what a <strong>trust tier</strong></p>\n<p>buys you, or why the folder tree is the least interesting thing about it.</p>\n<p>So this bundle documents okflify <strong>by being</strong> an okflify bundle. Everything you see</p>\n<p>\u2014 the sidebar, the trust card above this text, the graph, the tree \u2014 is this</p>\n<p>directory, rendered by the tool. There is no separate documentation to drift.</p>\n<h2>Scope</h2>\n<div class='tw'><table><thead><tr><th>In</th><th>Out</th></tr></thead><tbody><tr><td>What a bundle is, what okflify renders</td><td>The full OKF spec \u2014 linked, not restated</td></tr><tr><td>The trust model, because it is the point</td><td>Authoring advice \u2014 write what is true</td></tr></tbody></table></div>\n<h2>Status</h2>\n<ul><li><strong>Now:</strong> ships inside the repo at <code>example/</code>. Build it yourself in one command.</li><li><strong>Next experiment:</strong> point okflify at your own notes and see how thin the link graph is. That number is usually a surprise.</li></ul>\n<h2>Concepts</h2>\n<div class='tw'><table><thead><tr><th>Read</th><th>For</th></tr></thead><tbody><tr><td><a href=\"#what-is-a-bundle\" data-nav=\"what-is-a-bundle\">what-is-a-bundle</a></td><td>The five parts, and which are optional</td></tr><tr><td><a href=\"#trust-tiers\" data-nav=\"trust-tiers\">trust-tiers</a></td><td><code>human: &gt; job: &gt; agent:</code> and why it is the whole point</td></tr><tr><td><a href=\"#graph-not-tree\" data-nav=\"graph-not-tree\">graph-not-tree</a></td><td>Why directories lie about structure</td></tr><tr><td><a href=\"#what-okflify-renders\" data-nav=\"what-okflify-renders\">what-okflify-renders</a></td><td>Every feature, and how to reach it</td></tr></tbody></table></div>\n<h2>Learnings</h2>\n<ul><li><a href=\"#links-are-the-product\" data-nav=\"links-are-the-product\">links-are-the-product</a> \u2014 the lesson that cost the most to learn</li></ul>\n<h2>Evidence index</h2>\n<div class='tw'><table><thead><tr><th>Artifact</th><th>Path</th><th>Role</th></tr></thead><tbody><tr><td>This page</td><td>you are reading it</td><td>The tool renders its own documentation</td></tr><tr><td>Build output</td><td><a href=\"#build-output\" data-nav=\"build-output\"><code>evidence/build-output.md</code></a></td><td>Counts from a real run</td></tr></tbody></table></div>\n<h2>Citations</h2>\n<ul><li>Google <a href=\"https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md\" target=\"_blank\" rel=\"noopener\">OKF spec</a></li><li><a href=\"https://cloud.google.com/blog/products/data-analytics/okf-v0-2-adds-trust-signals\" target=\"_blank\" rel=\"noopener\">OKF v0.2 trust signals</a></li></ul>", "src": "## Question\n\nWhat does an Open Knowledge Format v0.2 bundle look like, and what does okflify do with one?\n\n## Why it matters\n\nOKF is easy to describe and hard to picture. Reading a spec tells you a bundle is\n\"markdown files with YAML frontmatter\"; it does not tell you what a **trust tier**\nbuys you, or why the folder tree is the least interesting thing about it.\n\nSo this bundle documents okflify **by being** an okflify bundle. Everything you see\n\u2014 the sidebar, the trust card above this text, the graph, the tree \u2014 is this\ndirectory, rendered by the tool. There is no separate documentation to drift.\n\n## Scope\n\n| In | Out |\n|----|-----|\n| What a bundle is, what okflify renders | The full OKF spec \u2014 linked, not restated |\n| The trust model, because it is the point | Authoring advice \u2014 write what is true |\n\n## Status\n\n- **Now:** ships inside the repo at `example/`. Build it yourself in one command.\n- **Next experiment:** point okflify at your own notes and see how thin the link graph is. That number is usually a surprise.\n\n## Concepts\n\n| Read | For |\n|------|-----|\n| [what-is-a-bundle](concepts/what-is-a-bundle.md) | The five parts, and which are optional |\n| [trust-tiers](concepts/trust-tiers.md) | `human: > job: > agent:` and why it is the whole point |\n| [graph-not-tree](concepts/graph-not-tree.md) | Why directories lie about structure |\n| [what-okflify-renders](concepts/what-okflify-renders.md) | Every feature, and how to reach it |\n\n## Learnings\n\n- [links-are-the-product](learnings/links-are-the-product.md) \u2014 the lesson that cost the most to learn\n\n## Evidence index\n\n| Artifact | Path | Role |\n|----------|------|------|\n| This page | you are reading it | The tool renders its own documentation |\n| Build output | [`evidence/build-output.md`](evidence/build-output.md) | Counts from a real run |\n\n## Citations\n\n- Google [OKF spec](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)\n- [OKF v0.2 trust signals](https://cloud.google.com/blog/products/data-analytics/okf-v0-2-adds-trust-signals)\n", "out": ["build-output", "graph-not-tree", "links-are-the-product", "trust-tiers", "what-is-a-bundle", "what-okflify-renders"], "in": []}, {"slug": "log", "bundle": "", "group": "Bundle", "section": "Bundle", "file": "log.md", "title": "log", "type": "\u2014", "status": "", "tags": "", "verified": {}, "html": "<h1>Investigation log (append-only)</h1>\n<div class='tw'><table><thead><tr><th>When</th><th>Who</th><th>Event</th><th>Concept / learning id</th></tr></thead><tbody><tr><td>2026-07-29</td><td>human:daniel</td><td>Asked for an example bundle shipped inside okflify, reachable from the sidebar</td><td><code>index</code></td></tr><tr><td>2026-07-29</td><td>agent:claude</td><td>Wrote the docs AS a bundle rather than about one \u2014 documentation that cannot drift from the tool</td><td><code>index</code></td></tr><tr><td>2026-07-29</td><td>agent:claude</td><td>Cross-linked the concepts deliberately, after shipping a real bundle whose every edge left the index</td><td><code>links-are-the-product</code></td></tr></tbody></table></div>\n<hr/>\n<h2>Why this bundle exists</h2>\n<p>Documentation about a format tends to drift from the tool that reads it. This</p>\n<p>bundle cannot: it is built by the tool, on every release, and a broken renderer</p>\n<p>means a broken page.</p>\n<p>It is also the smallest honest test. If okflify cannot make four concepts and a</p>\n<p>handful of links legible, it will not survive a hundred.</p>", "src": "# Investigation log (append-only)\n\n| When | Who | Event | Concept / learning id |\n|------|-----|-------|------------------------|\n| 2026-07-29 | human:daniel | Asked for an example bundle shipped inside okflify, reachable from the sidebar | `index` |\n| 2026-07-29 | agent:claude | Wrote the docs AS a bundle rather than about one \u2014 documentation that cannot drift from the tool | `index` |\n| 2026-07-29 | agent:claude | Cross-linked the concepts deliberately, after shipping a real bundle whose every edge left the index | `links-are-the-product` |\n\n---\n\n## Why this bundle exists\n\nDocumentation about a format tends to drift from the tool that reads it. This\nbundle cannot: it is built by the tool, on every release, and a broken renderer\nmeans a broken page.\n\nIt is also the smallest honest test. If okflify cannot make four concepts and a\nhandful of links legible, it will not survive a hundred.\n", "out": [], "in": []}, {"slug": "graph-not-tree", "bundle": "", "group": "Concepts", "section": "Concepts", "file": "concepts/graph-not-tree.md", "title": "OKF is a graph \u2014 the directory tree is storage, not structure", "type": "rule", "status": "", "tags": "[okf, graph, structure]", "verified": {"by": "job:okflify-build", "at": "2026-07-29", "method": "okflify extracts edges from markdown links, not from paths \u2014 the graph on this site is that extraction"}, "html": "<h2>The rule</h2>\n<p>Bundles live in folders, so every renderer reaches for a folder tree. That throws</p>\n<p>away the actual structure: <strong>concepts connect through ordinary markdown links</strong>,</p>\n<p>and the resulting network is richer than any parent-child path.</p>\n<pre class=\"mermaid\">flowchart LR\n  I[&quot;index&quot;] --&gt; B[&quot;what-is-a-bundle&quot;]\n  I --&gt; T[&quot;trust-tiers&quot;]\n  I --&gt; G[&quot;graph-not-tree&quot;]\n  I --&gt; R[&quot;what-okflify-renders&quot;]\n  B --&gt; G\n  G --&gt; R\n  T --&gt; L[&quot;links-are-the-product&quot;]\n  R --&gt; T\n  L --&gt; G</pre>\n<p>Same six files. The tree says <em>&quot;four things in a folder called concepts.&quot;</em> The</p>\n<p>graph says <em>what depends on what.</em></p>\n<h2>Both views, because both are true</h2>\n<p>okflify ships <strong>Knowledge graph</strong> and <strong>Tree</strong> side by side. The graph is the</p>\n<p>semantics; the tree is what you can navigate once a catalogue passes ~50</p>\n<p>documents. Neither replaces the other, and pretending the tree is the meaning is</p>\n<p>the mistake this rule exists to prevent.</p>\n<h2>The uncomfortable corollary</h2>\n<p><strong>If a bundle has no cross-links, okflify shows you a star</strong> \u2014 every edge leaving</p>\n<p><code>index.md</code>, nothing between concepts. A star is not a graph, and no amount of</p>\n<p>force-directed physics makes it one.</p>\n<p>okflify warns on stderr when a multi-document bundle has zero edges. It is</p>\n<p>supposed to be uncomfortable: a star means the concepts were written as chapters,</p>\n<p>not as claims that depend on each other.</p>\n<h2>Counter-cases</h2>\n<ul><li>Small bundles are legitimately star-shaped. Four documents do not owe you a</li></ul>\n<p>  network. The warning is about 30-document bundles that are still stars.</p>\n<ul><li>A dense graph is not automatically good \u2014 links added to look connected are</li></ul>\n<p>  worse than none, because they make the picture lie.</p>\n<h2>Next</h2>\n<p><a href=\"#what-okflify-renders\" data-nav=\"what-okflify-renders\">what-okflify-renders</a> \u00b7 and the learning this cost:</p>\n<p><a href=\"#links-are-the-product\" data-nav=\"links-are-the-product\">links-are-the-product</a>.</p>", "src": "## The rule\n\nBundles live in folders, so every renderer reaches for a folder tree. That throws\naway the actual structure: **concepts connect through ordinary markdown links**,\nand the resulting network is richer than any parent-child path.\n\n```mermaid\nflowchart LR\n  I[\"index\"] --> B[\"what-is-a-bundle\"]\n  I --> T[\"trust-tiers\"]\n  I --> G[\"graph-not-tree\"]\n  I --> R[\"what-okflify-renders\"]\n  B --> G\n  G --> R\n  T --> L[\"links-are-the-product\"]\n  R --> T\n  L --> G\n```\n\nSame six files. The tree says *\"four things in a folder called concepts.\"* The\ngraph says *what depends on what.*\n\n## Both views, because both are true\n\nokflify ships **Knowledge graph** and **Tree** side by side. The graph is the\nsemantics; the tree is what you can navigate once a catalogue passes ~50\ndocuments. Neither replaces the other, and pretending the tree is the meaning is\nthe mistake this rule exists to prevent.\n\n## The uncomfortable corollary\n\n**If a bundle has no cross-links, okflify shows you a star** \u2014 every edge leaving\n`index.md`, nothing between concepts. A star is not a graph, and no amount of\nforce-directed physics makes it one.\n\nokflify warns on stderr when a multi-document bundle has zero edges. It is\nsupposed to be uncomfortable: a star means the concepts were written as chapters,\nnot as claims that depend on each other.\n\n## Counter-cases\n\n- Small bundles are legitimately star-shaped. Four documents do not owe you a\n  network. The warning is about 30-document bundles that are still stars.\n- A dense graph is not automatically good \u2014 links added to look connected are\n  worse than none, because they make the picture lie.\n\n## Next\n\n[what-okflify-renders](what-okflify-renders.md) \u00b7 and the learning this cost:\n[links-are-the-product](../learnings/links-are-the-product.md).\n", "out": ["links-are-the-product", "what-okflify-renders"], "in": ["index", "what-is-a-bundle"]}, {"slug": "trust-tiers", "bundle": "", "group": "Concepts", "section": "Concepts", "file": "concepts/trust-tiers.md", "title": "human > job > agent \u2014 and an agent-only claim says so, loudly", "type": "rule", "status": "", "tags": "[okf, trust, verification]", "verified": {"by": "human:daniel", "at": "2026-07-29", "method": "the weighting is Daniel's operating rule for the ARP catalogue and is enforced in okflify's renderer"}, "html": "<h2>The rule</h2>\n<div class='tw'><table><thead><tr><th>Tier</th><th>Means</th><th>Weight</th></tr></thead><tbody><tr><td><code>human:daniel</code></td><td>A person checked it against reality</td><td>Highest</td></tr><tr><td><code>job:pytest</code></td><td>A repeatable check passed</td><td>Middle</td></tr><tr><td><code>agent:claude</code></td><td>A model asserted it</td><td><strong>Lowest</strong></td></tr></tbody></table></div>\n<p>okflify renders the tier at the top of every document, colours the graph node by</p>\n<p>it, and prints a warning on agent-only pages:</p>\n<div class=\"cal cal-note\"><span class=\"ci\" data-i=\"info\"></span><div><p><strong>Agent-verified.</strong> Under OKF v0.2 weighting treat as unverified for</p><p>gate-shaped decisions.</p></div></div>\n<h2>Why this is the whole point</h2>\n<p>Knowledge bases fail in one specific way: everything in them **looks equally</p>\n<p>true**. A confident paragraph an agent produced in four seconds renders exactly</p>\n<p>like a number a human checked against a bank statement.</p>\n<p>Trust tiers make the difference visible without anyone opening frontmatter. That</p>\n<p>is the entire feature. A renderer that shows agent output as confidently as human</p>\n<p>verification is not a neutral choice \u2014 it is a bug.</p>\n<h2>What good <code>method</code> looks like</h2>\n<div class='tw'><table><thead><tr><th>Weak</th><th>Strong</th></tr></thead><tbody><tr><td>&quot;reviewed&quot;</td><td>&quot;reverted the fix and confirmed the test fails against the original&quot;</td></tr><tr><td>&quot;checked the docs&quot;</td><td>&quot;unauthenticated HEAD returned 200 with a private-bucket control returning 400&quot;</td></tr><tr><td>&quot;verified&quot;</td><td>&quot;<code>vercel projects ls --scope \u2026</code> lists it; the ingestor is absent&quot;</td></tr></tbody></table></div>\n<p>The strong column shares a property: <strong>someone else could run it and disagree.</strong></p>\n<h2>Counter-cases</h2>\n<ul><li><code>job:</code> outranking <code>agent:</code> assumes the job asserts something real. A test that</li></ul>\n<p>  cannot fail is agent-tier wearing a badge.</p>\n<ul><li><code>human:</code> is not infallible \u2014 it is accountable. Different thing, still better.</li><li>Tiers describe <strong>how</strong> a claim was checked, never how important it is.</li></ul>\n<h2>Next</h2>\n<p><code>stale_after</code> is the unglamorous companion. A human-verified claim about a live</p>\n<p>system decays; the date says when to look again.</p>", "src": "## The rule\n\n| Tier | Means | Weight |\n|------|-------|--------|\n| `human:daniel` | A person checked it against reality | Highest |\n| `job:pytest` | A repeatable check passed | Middle |\n| `agent:claude` | A model asserted it | **Lowest** |\n\nokflify renders the tier at the top of every document, colours the graph node by\nit, and prints a warning on agent-only pages:\n\n> **Agent-verified.** Under OKF v0.2 weighting treat as unverified for\n> gate-shaped decisions.\n\n## Why this is the whole point\n\nKnowledge bases fail in one specific way: everything in them **looks equally\ntrue**. A confident paragraph an agent produced in four seconds renders exactly\nlike a number a human checked against a bank statement.\n\nTrust tiers make the difference visible without anyone opening frontmatter. That\nis the entire feature. A renderer that shows agent output as confidently as human\nverification is not a neutral choice \u2014 it is a bug.\n\n## What good `method` looks like\n\n| Weak | Strong |\n|---|---|\n| \"reviewed\" | \"reverted the fix and confirmed the test fails against the original\" |\n| \"checked the docs\" | \"unauthenticated HEAD returned 200 with a private-bucket control returning 400\" |\n| \"verified\" | \"`vercel projects ls --scope \u2026` lists it; the ingestor is absent\" |\n\nThe strong column shares a property: **someone else could run it and disagree.**\n\n## Counter-cases\n\n- `job:` outranking `agent:` assumes the job asserts something real. A test that\n  cannot fail is agent-tier wearing a badge.\n- `human:` is not infallible \u2014 it is accountable. Different thing, still better.\n- Tiers describe **how** a claim was checked, never how important it is.\n\n## Next\n\n`stale_after` is the unglamorous companion. A human-verified claim about a live\nsystem decays; the date says when to look again.\n", "out": [], "in": ["index", "what-is-a-bundle", "what-okflify-renders"]}, {"slug": "what-is-a-bundle", "bundle": "", "group": "Concepts", "section": "Concepts", "file": "concepts/what-is-a-bundle.md", "title": "A bundle is five parts, and three of them are optional", "type": "claim", "status": "", "tags": "[okf, structure]", "verified": {"by": "job:okflify-build", "at": "2026-07-29", "method": "the layout below is what okflify's discover() and collect() actually walk; if it were wrong this page would not render"}, "html": "<h2>The layout</h2>\n<pre><code>bundle/\n  index.md          # required \u2014 the root: question, why, status, links\n  log.md            # append-only diary (no frontmatter by convention)\n  concepts/*.md     # claims, rules, questions \u2014 the substance\n  evidence/*.md     # pointers to what was actually observed\n  learnings/*.md    # promoted, re-verified, generalisable\n  docs.json         # optional theming</code></pre>\n<p>Only <code>index.md</code> is required. okflify skips what is absent \u2014 a bundle with one</p>\n<p>file is a valid bundle.</p>\n<h2>Frontmatter that matters</h2>\n<pre><code>---\nokf_version: &quot;0.2&quot;\ntype: claim          # claim | rule | learning | question | evidence-pointer | investigation\ntitle: &quot;One sentence someone could disagree with&quot;\nverified:\n  by: human:daniel   # human: &gt; job: &gt; agent:\n  at: 2026-07-29\n  method: &quot;how you checked \u2014 the part people skip&quot;\n  stale_after: 2026-10-01\n---</code></pre>\n<p><code>method</code> is the field that does the work. &quot;Verified&quot; without a method is a</p>\n<p>feeling. See <a href=\"#trust-tiers\" data-nav=\"trust-tiers\">trust-tiers</a>.</p>\n<h2>Body shape that holds up</h2>\n<p>Not enforced, but earned: **claim \u2192 evidence \u2192 counter-cases \u2192 open questions \u2192</p>\n<p>next experiment.** The counter-cases section is the one that separates a note from</p>\n<p>a claim. If you cannot name a case where you would be wrong, you have written an</p>\n<p>opinion.</p>\n<h2>Counter-cases</h2>\n<ul><li>A registry \u2014 &quot;where does X live?&quot; \u2014 is <em>not</em> a bundle. Trust tiers on a URL are</li></ul>\n<p>  noise. Keep catalogs as structured data with a schema.</p>\n<ul><li>A bundle per meeting produces sprawl. One bundle per **question you expect to</li></ul>\n<p>  re-learn in 30 days**.</p>\n<h2>Next</h2>\n<p>Read <a href=\"#graph-not-tree\" data-nav=\"graph-not-tree\">graph-not-tree</a> \u2014 the layout above is storage, not structure.</p>", "src": "## The layout\n\n```\nbundle/\n  index.md          # required \u2014 the root: question, why, status, links\n  log.md            # append-only diary (no frontmatter by convention)\n  concepts/*.md     # claims, rules, questions \u2014 the substance\n  evidence/*.md     # pointers to what was actually observed\n  learnings/*.md    # promoted, re-verified, generalisable\n  docs.json         # optional theming\n```\n\nOnly `index.md` is required. okflify skips what is absent \u2014 a bundle with one\nfile is a valid bundle.\n\n## Frontmatter that matters\n\n```yaml\n---\nokf_version: \"0.2\"\ntype: claim          # claim | rule | learning | question | evidence-pointer | investigation\ntitle: \"One sentence someone could disagree with\"\nverified:\n  by: human:daniel   # human: > job: > agent:\n  at: 2026-07-29\n  method: \"how you checked \u2014 the part people skip\"\n  stale_after: 2026-10-01\n---\n```\n\n`method` is the field that does the work. \"Verified\" without a method is a\nfeeling. See [trust-tiers](trust-tiers.md).\n\n## Body shape that holds up\n\nNot enforced, but earned: **claim \u2192 evidence \u2192 counter-cases \u2192 open questions \u2192\nnext experiment.** The counter-cases section is the one that separates a note from\na claim. If you cannot name a case where you would be wrong, you have written an\nopinion.\n\n## Counter-cases\n\n- A registry \u2014 \"where does X live?\" \u2014 is *not* a bundle. Trust tiers on a URL are\n  noise. Keep catalogs as structured data with a schema.\n- A bundle per meeting produces sprawl. One bundle per **question you expect to\n  re-learn in 30 days**.\n\n## Next\n\nRead [graph-not-tree](graph-not-tree.md) \u2014 the layout above is storage, not structure.\n", "out": ["graph-not-tree", "trust-tiers"], "in": ["index"]}, {"slug": "what-okflify-renders", "bundle": "", "group": "Concepts", "section": "Concepts", "file": "concepts/what-okflify-renders.md", "title": "What okflify renders, and how to reach each part", "type": "claim", "status": "", "tags": "[okflify, features]", "verified": {"by": "job:okflify-build", "at": "2026-07-29", "method": "every row below is exercised by the page you are reading; a broken feature breaks this page"}, "html": "<h2>One command</h2>\n<pre><code>okflify &lt;bundle-or-catalogue&gt; --open</code></pre>\n<p>Output is <strong>one self-contained HTML file</strong>. No server, no build step, no</p>\n<p>dependencies \u2014 it opens from <code>file://</code>, survives email, and prints.</p>\n<h2>What you get</h2>\n<div class='tw'><table><thead><tr><th>Feature</th><th>Where</th><th>Note</th></tr></thead><tbody><tr><td><strong>Trust card</strong></td><td>top of every document</td><td>tier, date, method, staleness, agent warning</td></tr><tr><td><strong>Knowledge graph</strong></td><td>sidebar \u2192 Overview</td><td>drag nodes, click to open; size = inbound links, colour = tier</td></tr><tr><td><strong>Tree</strong></td><td>sidebar \u2192 Overview</td><td>bundle \u2192 section \u2192 document, collapsible</td></tr><tr><td><strong>Backlinks</strong></td><td>foot of each document</td><td>&quot;links to&quot; / &quot;linked from&quot; as cards</td></tr><tr><td><strong>\u2318K palette</strong></td><td>anywhere</td><td>indexes documents <strong>and</strong> every h2/h3</td></tr><tr><td><strong>Copy page</strong></td><td>title row</td><td>Markdown for LLMs \u00b7 open in Claude/ChatGPT \u00b7 copy whole bundle</td></tr><tr><td><strong>Diagram surfing</strong></td><td>click any diagram</td><td>scroll zooms at cursor, drag or space+drag pans, <code>0</code> fit, <code>1</code> actual, <code>esc</code></td></tr><tr><td><strong>Theme</strong></td><td>header</td><td>light/dark; diagrams re-render to match</td></tr><tr><td><strong>Print</strong></td><td>header</td><td>every document, page-broken</td></tr></tbody></table></div>\n<h2>Catalogues</h2>\n<p>Point it at a directory of bundles \u2014 <code>root/bundles/&lt;slug&gt;/</code> or <code>root/&lt;slug&gt;/</code> \u2014</p>\n<p>and it renders them as one site. Slugs are namespaced <code>&lt;bundle&gt;/&lt;doc&gt;</code>, so</p>\n<p><code>../other-bundle/index.md</code> becomes a real cross-bundle edge, and the sidebar</p>\n<p>groups by bundle.</p>\n<p>The ARP catalogue it was built for: <strong>18 bundles, 102 documents, 88 edges.</strong></p>\n<h2>Theming</h2>\n<p><code>docs.json</code>, Mintlify-shaped. Never edit the template to restyle.</p>\n<pre><code>{ &quot;name&quot;: &quot;My Knowledge&quot;,\n  &quot;colors&quot;: { &quot;primary&quot;: &quot;#2E6F5E&quot;, &quot;light&quot;: &quot;#6FC7AC&quot;, &quot;dark&quot;: &quot;#1F5044&quot; },\n  &quot;fonts&quot;: { &quot;family&quot;: &quot;Inter&quot; },\n  &quot;background&quot;: { &quot;decoration&quot;: &quot;gradient&quot; } }</code></pre>\n<p>Any Google Font name loads automatically.</p>\n<h2>Counter-cases</h2>\n<ul><li>Not an editor. okflify reads; something else writes.</li><li>Not a general markdown renderer \u2014 it renders what bundles contain.</li><li>Mermaid loads from a CDN at view time, so diagrams need network on first paint.</li></ul>\n<h2>Known gaps</h2>\n<p>Stated because <a href=\"#trust-tiers\" data-nav=\"trust-tiers\">trust-tiers</a> makes overselling a bug:</p>\n<ul><li>No arrowheads on graph edges \u2014 direction is invisible</li><li>Layout re-seeds per visit rather than staying stable</li><li>No full-text search across document <em>bodies</em> (titles and headings only)</li></ul>", "src": "## One command\n\n```sh\nokflify <bundle-or-catalogue> --open\n```\n\nOutput is **one self-contained HTML file**. No server, no build step, no\ndependencies \u2014 it opens from `file://`, survives email, and prints.\n\n## What you get\n\n| Feature | Where | Note |\n|---|---|---|\n| **Trust card** | top of every document | tier, date, method, staleness, agent warning |\n| **Knowledge graph** | sidebar \u2192 Overview | drag nodes, click to open; size = inbound links, colour = tier |\n| **Tree** | sidebar \u2192 Overview | bundle \u2192 section \u2192 document, collapsible |\n| **Backlinks** | foot of each document | \"links to\" / \"linked from\" as cards |\n| **\u2318K palette** | anywhere | indexes documents **and** every h2/h3 |\n| **Copy page** | title row | Markdown for LLMs \u00b7 open in Claude/ChatGPT \u00b7 copy whole bundle |\n| **Diagram surfing** | click any diagram | scroll zooms at cursor, drag or space+drag pans, `0` fit, `1` actual, `esc` |\n| **Theme** | header | light/dark; diagrams re-render to match |\n| **Print** | header | every document, page-broken |\n\n## Catalogues\n\nPoint it at a directory of bundles \u2014 `root/bundles/<slug>/` or `root/<slug>/` \u2014\nand it renders them as one site. Slugs are namespaced `<bundle>/<doc>`, so\n`../other-bundle/index.md` becomes a real cross-bundle edge, and the sidebar\ngroups by bundle.\n\nThe ARP catalogue it was built for: **18 bundles, 102 documents, 88 edges.**\n\n## Theming\n\n`docs.json`, Mintlify-shaped. Never edit the template to restyle.\n\n```json\n{ \"name\": \"My Knowledge\",\n  \"colors\": { \"primary\": \"#2E6F5E\", \"light\": \"#6FC7AC\", \"dark\": \"#1F5044\" },\n  \"fonts\": { \"family\": \"Inter\" },\n  \"background\": { \"decoration\": \"gradient\" } }\n```\n\nAny Google Font name loads automatically.\n\n## Counter-cases\n\n- Not an editor. okflify reads; something else writes.\n- Not a general markdown renderer \u2014 it renders what bundles contain.\n- Mermaid loads from a CDN at view time, so diagrams need network on first paint.\n\n## Known gaps\n\nStated because [trust-tiers](trust-tiers.md) makes overselling a bug:\n\n- No arrowheads on graph edges \u2014 direction is invisible\n- Layout re-seeds per visit rather than staying stable\n- No full-text search across document *bodies* (titles and headings only)\n", "out": ["trust-tiers"], "in": ["graph-not-tree", "index"]}, {"slug": "build-output", "bundle": "", "group": "Evidence", "section": "Evidence", "file": "evidence/build-output.md", "title": "Build output \u2014 what this bundle produces", "type": "evidence-pointer", "status": "", "tags": "[okflify, evidence]", "verified": {"by": "job:okflify-build", "at": "2026-07-29", "method": "captured from `okflify example` on the commit that ships this bundle"}, "html": "<h2>Command</h2>\n<pre><code>$ okflify example\nokflify \u2192 example/okflify.html \u2014 8 documents, 12 edges, 1 diagrams</code></pre>\n<h2>What that means</h2>\n<div class='tw'><table><thead><tr><th>Number</th><th>Reading</th></tr></thead><tbody><tr><td><strong>8 documents</strong></td><td>index + log + 4 concepts + 1 learning + 1 evidence</td></tr><tr><td><strong>12 edges</strong></td><td>markdown links between them \u2014 <strong>6 of 12 originate outside the index</strong></td></tr><tr><td><strong>density 0.43</strong></td><td>vs 0.19 for the star described in <a href=\"#links-are-the-product\" data-nav=\"links-are-the-product\">links-are-the-product</a></td></tr><tr><td><strong>1 diagram</strong></td><td>the mermaid graph in <code>graph-not-tree</code></td></tr></tbody></table></div>\n<p>The middle number is the one that matters. A star of 8 documents would show 7</p>\n<p>edges, all from the index, and density 0.25. See <a href=\"#links-are-the-product\" data-nav=\"links-are-the-product\">links-are-the-product</a>.</p>\n<h2>A correction worth keeping</h2>\n<p>The first draft of this page claimed 7 documents and 12 edges. The build said 8</p>\n<p>and 10. Both numbers were wrong, and chasing the gap exposed a real bug: okflify</p>\n<p>treated <code>../learnings/x.md</code> (a section hop inside one bundle) as a bundle hop,</p>\n<p>silently dropping two edges.</p>\n<p>Invented numbers on an evidence page would have hidden a renderer bug. That is</p>\n<p>the argument for <code>method:</code> in one paragraph.</p>\n<h2>Reproduce</h2>\n<pre><code>git clone https://github.com/eidos-agi/okflify &amp;&amp; cd okflify\npip install -e .\nokflify example --open</code></pre>\n<p>If the counts differ from the table above, this page is stale \u2014 which is the</p>\n<p>point of recording them.</p>", "src": "## Command\n\n```sh\n$ okflify example\nokflify \u2192 example/okflify.html \u2014 8 documents, 12 edges, 1 diagrams\n```\n\n## What that means\n\n| Number | Reading |\n|---|---|\n| **8 documents** | index + log + 4 concepts + 1 learning + 1 evidence |\n| **12 edges** | markdown links between them \u2014 **6 of 12 originate outside the index** |\n| **density 0.43** | vs 0.19 for the star described in [links-are-the-product](../learnings/links-are-the-product.md) |\n| **1 diagram** | the mermaid graph in `graph-not-tree` |\n\nThe middle number is the one that matters. A star of 8 documents would show 7\nedges, all from the index, and density 0.25. See [links-are-the-product](../learnings/links-are-the-product.md).\n\n## A correction worth keeping\n\nThe first draft of this page claimed 7 documents and 12 edges. The build said 8\nand 10. Both numbers were wrong, and chasing the gap exposed a real bug: okflify\ntreated `../learnings/x.md` (a section hop inside one bundle) as a bundle hop,\nsilently dropping two edges.\n\nInvented numbers on an evidence page would have hidden a renderer bug. That is\nthe argument for `method:` in one paragraph.\n\n## Reproduce\n\n```sh\ngit clone https://github.com/eidos-agi/okflify && cd okflify\npip install -e .\nokflify example --open\n```\n\nIf the counts differ from the table above, this page is stale \u2014 which is the\npoint of recording them.\n", "out": ["links-are-the-product"], "in": ["index"]}, {"slug": "links-are-the-product", "bundle": "", "group": "Learnings", "section": "Learnings", "file": "learnings/links-are-the-product.md", "title": "A renderer cannot fix a bundle with nothing to render", "type": "learning", "status": "", "tags": "[okf, graph, method]", "verified": {"by": "human:daniel", "at": "2026-07-29", "method": "observed directly: the first real bundle rendered a star, and Daniel said the graph tool was bad before the bundle was diagnosed", "stale_after": "2027-01-01"}, "html": "<h2>The learning</h2>\n<p><strong>The graph view is only as good as the links the author wrote.</strong></p>\n<p>okflify&#x27;s first real bundle \u2014 nine documents about a platform architecture \u2014</p>\n<p>rendered as a <strong>star</strong>: all seven edges leaving <code>index.md</code>, no concept linking to</p>\n<p>any other, one document orphaned entirely. Density 0.19.</p>\n<p>The reasonable reaction was <em>&quot;this is a bad graph tool.&quot;</em> It was not. It was an</p>\n<p>honest picture of a bundle written as <strong>chapters</strong> \u2014 00, 01, 02 \u2014 rather than as</p>\n<p>claims that depend on each other.</p>\n<p>The next bundle, written with cross-links deliberately, came out at **18 edges</p>\n<p>across 8 documents, density 0.64, 12 of 18 originating outside the index**. Same</p>\n<p>renderer. Different authoring.</p>\n<h2>Why it generalises</h2>\n<p>Any visualisation inherits its subject&#x27;s quality. A force-directed layout of a</p>\n<p>hierarchy is strictly worse than a list: same information, plus jitter.</p>\n<p>The tempting fix is renderer features \u2014 arrowheads, clustering, better physics.</p>\n<p>None of them create a relationship that the author did not write down.</p>\n<h2>What to do instead</h2>\n<ul><li>Write concepts that <strong>cite each other</strong>: a rule should link the claim it rests on</li><li>Link <strong>counter-cases across bundles</strong> \u2014 that is where the real edges live</li><li>Treat okflify&#x27;s zero-edge warning as a <strong>content</strong> signal, not a bug report</li><li>Judge a bundle by whether edges originate <strong>outside the index</strong></li></ul>\n<h2>Counter-cases</h2>\n<ul><li>Small bundles are legitimately star-shaped; four documents owe you nothing.</li><li>Density can be gamed. Links added to look connected are worse than absent ones,</li></ul>\n<p>  because the picture then lies with confidence.</p>\n<ul><li>Some knowledge really is hierarchical \u2014 a runbook is a sequence. Use the tree.</li></ul>\n<h2>Re-verify</h2>\n<p>When a catalogue passes ~50 documents. If density has fallen while document count</p>\n<p>rose, bundles are being written in isolation again.</p>", "src": "## The learning\n\n**The graph view is only as good as the links the author wrote.**\n\nokflify's first real bundle \u2014 nine documents about a platform architecture \u2014\nrendered as a **star**: all seven edges leaving `index.md`, no concept linking to\nany other, one document orphaned entirely. Density 0.19.\n\nThe reasonable reaction was *\"this is a bad graph tool.\"* It was not. It was an\nhonest picture of a bundle written as **chapters** \u2014 00, 01, 02 \u2014 rather than as\nclaims that depend on each other.\n\nThe next bundle, written with cross-links deliberately, came out at **18 edges\nacross 8 documents, density 0.64, 12 of 18 originating outside the index**. Same\nrenderer. Different authoring.\n\n## Why it generalises\n\nAny visualisation inherits its subject's quality. A force-directed layout of a\nhierarchy is strictly worse than a list: same information, plus jitter.\n\nThe tempting fix is renderer features \u2014 arrowheads, clustering, better physics.\nNone of them create a relationship that the author did not write down.\n\n## What to do instead\n\n- Write concepts that **cite each other**: a rule should link the claim it rests on\n- Link **counter-cases across bundles** \u2014 that is where the real edges live\n- Treat okflify's zero-edge warning as a **content** signal, not a bug report\n- Judge a bundle by whether edges originate **outside the index**\n\n## Counter-cases\n\n- Small bundles are legitimately star-shaped; four documents owe you nothing.\n- Density can be gamed. Links added to look connected are worse than absent ones,\n  because the picture then lies with confidence.\n- Some knowledge really is hierarchical \u2014 a runbook is a sequence. Use the tree.\n\n## Re-verify\n\nWhen a catalogue passes ~50 documents. If density has fallen while document count\nrose, bundles are being written in isolation again.\n", "out": [], "in": ["build-output", "graph-not-tree", "index"]}],EDGES=[{"s": "index", "t": "what-is-a-bundle"}, {"s": "index", "t": "trust-tiers"}, {"s": "index", "t": "graph-not-tree"}, {"s": "index", "t": "what-okflify-renders"}, {"s": "index", "t": "links-are-the-product"}, {"s": "index", "t": "build-output"}, {"s": "graph-not-tree", "t": "what-okflify-renders"}, {"s": "graph-not-tree", "t": "links-are-the-product"}, {"s": "what-is-a-bundle", "t": "trust-tiers"}, {"s": "what-is-a-bundle", "t": "graph-not-tree"}, {"s": "what-okflify-renders", "t": "trust-tiers"}, {"s": "build-output", "t": "links-are-the-product"}],EYEBROW="section";
+const B=Object.fromEntries(DOCS.map(d=>[d.slug,d]));
+const tier=v=>(v||"").startsWith("human:")?"human":(v||"").startsWith("job:")?"job":"agent";
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const I={info:'<circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/>',
+ "circle-help":'<circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4M12 17h.01"/>',
+ "triangle-alert":'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/>',
+ "octagon-alert":'<path d="M8 2h8l6 6v8l-6 6H8l-6-6V8Z"/><path d="M12 8v4M12 16h.01"/>',
+ "circle-check":'<circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/>',
+ lightbulb:'<path d="M9 18h6M10 22h4M12 2a6 6 0 0 0-4 10.5c.6.7 1 1.5 1 2.5h6c0-1 .4-1.8 1-2.5A6 6 0 0 0 12 2Z"/>',
+ map:'<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Z"/><path d="M9 3v15M15 6v15"/>',
+ layers:'<path d="m12 2 9 5-9 5-9-5Z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/>',
+ file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/>',
+ flask:'<path d="M9 2v7L4 19a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-10V2M8 2h8M7 14h10"/>',
+ list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>'};
+const svg=(n,s=16)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${I[n]||I.info}</svg>`;
+const GI={Overview:"map",Bundle:"layers",Concepts:"file",Evidence:"flask",Learnings:"lightbulb"};
+
+/* theme */
+const mq=matchMedia("(prefers-color-scheme:dark)");
+function setT(t){document.documentElement.dataset.t=t;localStorage.okfT=t;
+ const D=t==="dark";
+ // theme:"base" + explicit variables — the built-in themes render dark subgraph
+ // fills with dark labels, which is unreadable. Bind mermaid to our palette.
+ const ink=D?"#fafafa":"#18181b", mut=D?"#c8c8ce":"#3f3f46", line=D?"#3a3a40":"#c8c8ce",
+       card=D?"#18181b":"#ffffff", clus=D?"#141417":"#f6f6f7", bg=D?"#09090b":"#ffffff";
+ mermaid.initialize({startOnLoad:false,securityLevel:"loose",flowchart:{curve:"basis",padding:14},
+  theme:"base",themeVariables:{
+   background:bg, mainBkg:card, primaryColor:card, primaryTextColor:ink, primaryBorderColor:line,
+   secondaryColor:clus, secondaryTextColor:ink, secondaryBorderColor:line,
+   tertiaryColor:clus, tertiaryTextColor:ink, tertiaryBorderColor:line,
+   lineColor:mut, textColor:ink, nodeTextColor:ink, nodeBorder:line,
+   clusterBkg:clus, clusterBorder:line, titleColor:ink,
+   edgeLabelBackground:bg, labelBoxBkgColor:card, labelBoxBorderColor:line, labelTextColor:ink,
+   actorBkg:card, actorBorder:line, actorTextColor:ink, actorLineColor:mut,
+   signalColor:mut, signalTextColor:ink, noteBkgColor:clus, noteTextColor:ink, noteBorderColor:line,
+   sequenceNumberColor:bg, altBackground:clus,
+   fontFamily:'"Inter",ui-sans-serif,system-ui', fontSize:"14px"}});
+ if(typeof resetMermaid==="function")resetMermaid();else R.clear();
+ paint();if(location.hash.slice(1)==="graph")G();}
+document.getElementById("th").onclick=()=>setT(document.documentElement.dataset.t==="dark"?"light":"dark");
+document.documentElement.dataset.decor="gradient";
+
+/* nav */
+const G0=[];DOCS.forEach(d=>{let g=G0.find(x=>x.n===d.group);if(!g){g={n:d.group,i:[]};G0.push(g)}g.i.push(d)});
+function nav(f=""){const q=f.toLowerCase();
+ let h=`<div class="sec">${svg(GI.Overview,15)}Overview</div><a class="n" href="#graph" data-nav="graph">Knowledge graph</a><a class="n" href="#tree" data-nav="tree">Tree</a>`;
+ let hits=0;
+ h+=G0.map(g=>{const it=g.i.filter(d=>!q||d.title.toLowerCase().includes(q)||d.slug.includes(q)||String(d.tags||"").toLowerCase().includes(q));
+   hits+=it.length;if(!it.length)return"";
+   return `<div class="sec">${svg(GI[g.n]||"layers",15)}${g.n}</div>`+
+     it.map(d=>`<a class="n" href="#${d.slug}" data-nav="${d.slug}">${esc(d.title)}</a>`).join("")}).join("");
+ if(q&&!hits)h+=`<div class="empty">No matches</div>`;
+ document.getElementById("nav").innerHTML=h;mark();}
+document.getElementById("q").oninput=e=>nav(e.target.value);
+
+/* docs */
+document.getElementById("body").innerHTML=DOCS.map(d=>{
+ const v=d.verified||{},t=tier(v.by);
+ const fl=t==="agent"?`<div class="fl"><strong>Agent-verified.</strong> Under OKF v0.2 weighting (human &gt; job &gt; agent) treat as unverified for gate-shaped decisions.</div>`:"";
+ const tr=v.by?`<div class="trust"><div class="hd"><span class="dot ${t}"></span>${esc(v.by)} · ${d.type}</div><dl>
+   <dt>verified</dt><dd>${esc(v.at||"—")}</dd><dt>method</dt><dd>${esc(v.method||"—")}</dd>
+   ${v.stale_after?`<dt>stale after</dt><dd>${esc(v.stale_after)}</dd>`:""}</dl>${fl}</div>`:"";
+ const cards=(l,lb)=>l&&l.length?`<h4>${lb}</h4><div class="cards">`+l.map(s=>{const o=B[s];if(!o)return"";
+   return `<a class="card" href="#${s}" data-nav="${s}"><div class="t">${esc(o.title)}</div>
+     <div class="m"><span class="dot ${tier(o.verified&&o.verified.by)}"></span>${o.type}</div></a>`}).join("")+`</div>`:"";
+ const rel=((d.out&&d.out.length)||(d.in&&d.in.length))?`<div class="rel">${cards(d.out,"Links to")}${cards(d.in,"Linked from")}</div>`:"";
+ const eb=EYEBROW==="section"?`<div class="eyebrow">${esc(d.bundle?d.bundle+" · "+(d.section||""):d.group)}</div>`:"";
+ const h1=`<h1>${esc(d.title)}</h1>`;
+ return `<article class="doc" id="doc-${d.slug}">${eb}${h1}${tr}${d.html}${rel}</article>`}).join("")+
+`<article class="doc" id="doc-tree"><div class="eyebrow">Overview</div>
+ <h1>Tree</h1>
+ <p>The containment view: bundle → section → document. OKF's <em>meaning</em> lives in the links between documents — see the <a href="#graph" data-nav="graph">knowledge graph</a> — but at this size a hierarchy is what you can actually navigate. Directories are storage; this is that storage, made legible.</p>
+ <div class="tbar"><button class="ib" onclick="document.querySelectorAll('#treehost details').forEach(d=>d.open=true)">Expand all</button>
+ <button class="ib" onclick="document.querySelectorAll('#treehost details').forEach(d=>d.open=false)">Collapse all</button></div>
+ <div class="tree" id="treehost"></div></article>`+
+`<article class="doc" id="doc-graph"><div class="eyebrow">Overview</div>
+ <h1>Knowledge graph</h1>
+ <p>OKF is a <strong>graph, not a tree</strong>. Directories are storage; the real structure is the links documents make to each other. Every edge is a markdown reference. Drag to rearrange, click to open.</p>
+ <div id="gw"><svg id="graph"></svg><div class="gl">
+   <span><span class="dot human"></span>human-verified</span><span><span class="dot job"></span>job-verified</span>
+   <span><span class="dot agent"></span>agent-verified</span><span>node size = inbound links</span></div></div></article>`;
+
+/* mermaid: keep the source, because mermaid.run() is a no-op once a block
+   carries data-processed. Without this the FIRST theme rendered wins forever
+   and a light page keeps dark diagrams. */
+const MSRC=new Map();
+document.querySelectorAll(".mermaid").forEach((e,i)=>{e.dataset.mid="m"+i;MSRC.set("m"+i,e.textContent)});
+function resetMermaid(){
+ document.querySelectorAll(".mermaid").forEach(e=>{
+  const src=MSRC.get(e.dataset.mid);if(src==null)return;
+  e.removeAttribute("data-processed");e.innerHTML="";e.textContent=src});
+ R.clear();
+}
+
+/* icons in callouts */
+document.querySelectorAll(".ci").forEach(e=>e.innerHTML=svg(e.dataset.i,17));
+
+/* graph */
+function buildTree(){
+  const host=document.getElementById("treehost"); if(!host) return;
+  const bundles={};
+  DOCS.forEach(d=>{const b=d.bundle||"(bundle)";const k=d.section||d.group;
+    bundles[b]=bundles[b]||{}; (bundles[b][k]=bundles[b][k]||[]).push(d)});
+  const ORDER=["Bundle","Concepts","Evidence","Learnings"];
+  const names=Object.keys(bundles).sort();
+  host.innerHTML=names.map(b=>{
+    const secs=bundles[b], n=Object.values(secs).reduce((a,x)=>a+x.length,0);
+    const keys=ORDER.filter(k=>secs[k]).concat(Object.keys(secs).filter(k=>!ORDER.includes(k)));
+    const inner=keys.map(k=>`<div class="tsec">${esc(k)}</div>`+secs[k].map(d=>
+        `<a class="tleaf" href="#${d.slug}" data-nav="${d.slug}">
+           <span class="dot ${tier(d.verified&&d.verified.by)}"></span>
+           <span class="tt">${esc(d.title)}</span><span class="tk">${esc(d.type)}</span></a>`).join("")).join("");
+    return `<details class="tbundle"${names.length<4?" open":""}>
+      <summary class="tsum">
+        <svg class="car" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 6 6 6-6 6"/></svg>
+        <span class="nm">${esc(b)}</span><span class="ct">${n}</span></summary>
+      <div class="tnode">${inner}</div></details>`}).join("");
+}
+
+const S=document.getElementById("graph");let P={},drag=null,spin=0;
+const N=DOCS.map(d=>({...d,deg:EDGES.filter(e=>e.t===d.slug).length}));
+function G(){const W=S.clientWidth||900,H=540;
+ if(!Object.keys(P).length)N.forEach((n,i)=>{const a=i/N.length*6.2832;
+   P[n.slug]={x:W/2+Math.cos(a)*W*.26,y:H/2+Math.sin(a)*H*.3,vx:0,vy:0}});
+ const k=Math.sqrt(W*H/Math.max(N.length,1))*.6;
+ for(let it=0;it<3;it++){
+  for(let i=0;i<N.length;i++)for(let j=i+1;j<N.length;j++){const a=P[N[i].slug],b=P[N[j].slug];
+   let dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy||1,f=k*k/d2*.9;
+   a.vx+=dx*f;a.vy+=dy*f;b.vx-=dx*f;b.vy-=dy*f}
+  EDGES.forEach(e=>{const a=P[e.s],b=P[e.t];if(!a||!b)return;
+   let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,f=(d-k*1.5)*.0006*d;
+   a.vx+=dx/d*f;a.vy+=dy/d*f;b.vx-=dx/d*f;b.vy-=dy/d*f});
+  N.forEach(n=>{const p=P[n.slug];p.vx+=(W/2-p.x)*.0022;p.vy+=(H/2-p.y)*.0022;
+   p.x+=Math.max(-9,Math.min(9,p.vx));p.y+=Math.max(-9,Math.min(9,p.vy));p.vx*=.82;p.vy*=.82;
+   p.x=Math.max(70,Math.min(W-70,p.x));p.y=Math.max(28,Math.min(H-26,p.y))})}
+ S.setAttribute("viewBox",`0 0 ${W} ${H}`);
+ S.innerHTML=EDGES.map(e=>{const a=P[e.s],b=P[e.t];return a&&b?`<line class="link" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/>`:""}).join("")+
+  N.map(n=>{const p=P[n.slug],r=7+Math.min(n.deg*2.2,9),s=n.title.length>24?n.title.slice(0,23)+"…":n.title;
+   return `<g class="node" data-s="${n.slug}"><circle cx="${p.x}" cy="${p.y}" r="${r}" fill="var(--${tier(n.verified&&n.verified.by)})"/>
+    <text x="${p.x}" y="${p.y+r+14}" text-anchor="middle">${esc(s)}</text></g>`}).join("")}
+S.addEventListener("mousedown",e=>{const g=e.target.closest(".node");if(g){drag=g.dataset.s;e.preventDefault()}});
+addEventListener("mousemove",e=>{if(!drag)return;const r=S.getBoundingClientRect();
+ P[drag].x=(e.clientX-r.left)*((S.viewBox.baseVal.width||r.width)/r.width);
+ P[drag].y=(e.clientY-r.top)*(540/r.height);P[drag].vx=P[drag].vy=0;G()});
+addEventListener("mouseup",()=>drag=null);
+S.addEventListener("click",e=>{const g=e.target.closest(".node");if(g&&!drag)location.hash=g.dataset.s});
+(function loop(){if(location.hash.slice(1)==="graph"&&spin++<170)G();requestAnimationFrame(loop)})();
+
+/* paint */
+const R=new Set();
+function mark(){const s=location.hash.slice(1)||DOCS[0].slug;
+ document.querySelectorAll("aside a.n").forEach(a=>a.classList.toggle("on",a.dataset.nav===s))}
+function paint(){
+ const s=location.hash.slice(1)||DOCS[0].slug;
+ document.querySelectorAll(".doc").forEach(e=>e.classList.remove("on"));
+ const el=document.getElementById("doc-"+s)||document.getElementById("doc-"+DOCS[0].slug);
+ el.classList.add("on");mark();
+ if(!R.has(s)){R.add(s);const n=el.querySelectorAll(".mermaid");if(n.length)mermaid.run({nodes:n})}
+ const hs=[...el.querySelectorAll("h2,h3")];
+ document.getElementById("rail").innerHTML=hs.length>1
+  ?`<div class="rh">${svg("list",14)}On this page</div>`+hs.map((h,i)=>{h.id=h.id||`h-${s}-${i}`;
+     return `<a href="#${h.id}" data-toc class="${h.tagName==="H3"?"l3":""}">${esc(h.textContent)}</a>`}).join(""):"";
+ try{mountActions();mountCode();mountSpy(el)}catch(e){/* defined later in this
+   script; the trailing IIFE performs the first mount. Must not abort paint(),
+   which would leave the sidebar unbuilt. */}
+ if(s==="graph"){spin=0;P={};G()}
+ if(s==="tree")buildTree();
+ document.querySelector("main").scrollTop=0;
+}
+document.addEventListener("click",e=>{
+ const t=e.target.closest("[data-toc]");
+ if(t){e.preventDefault();document.getElementById(t.getAttribute("href").slice(1))?.scrollIntoView();
+   document.querySelectorAll("[data-toc]").forEach(a=>a.classList.remove("here"));t.classList.add("here");return}
+ const a=e.target.closest("[data-nav]");if(a){e.preventDefault();location.hash=a.dataset.nav}});
+addEventListener("hashchange",paint);
+addEventListener("beforeprint",()=>document.querySelectorAll(".doc").forEach(el=>{
+ const s=el.id.replace("doc-","");if(!R.has(s)){R.add(s);const n=el.querySelectorAll(".mermaid");if(n.length)mermaid.run({nodes:n})}}));
+setT(localStorage.okfT||("system"==="dark"?"dark":"system"==="light"?"light":(mq.matches?"dark":"light")));
+nav();
+if(!location.hash)location.hash=DOCS[0].slug;else paint();
+
+
+/* ── page actions: copy for LLMs ───────────────────────────── */
+const RAW=Object.fromEntries(DOCS.map(d=>[d.slug,d.src||""]));
+function toast(m){let t=document.getElementById("toast");
+ if(!t){t=document.createElement("div");t.id="toast";document.body.appendChild(t)}
+ t.textContent=m;t.classList.add("on");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("on"),1900)}
+function pageMd(slug){const d=B[slug];if(!d)return"";const v=d.verified||{};
+ return `# ${d.title}\n\n> OKF v0.2 · type: ${d.type} · verified.by: ${v.by||"—"} (${v.at||"—"})\n`+
+  `> method: ${v.method||"—"}\n${v.by&&!String(v.by).startsWith("human:")?"> NOTE: not human-verified — treat as unverified for gate-shaped decisions.\n":""}`+
+  `\n${RAW[slug]||""}`}
+async function copyMd(slug,msg){try{await navigator.clipboard.writeText(pageMd(slug));toast(msg||"Copied as Markdown")}
+ catch(e){const t=document.createElement("textarea");t.value=pageMd(slug);document.body.appendChild(t);
+  t.select();document.execCommand("copy");t.remove();toast(msg||"Copied as Markdown")}}
+const MI={copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
+ bot:'<rect x="4" y="8" width="16" height="12" rx="2"/><path d="M12 8V4M9 14h.01M15 14h.01"/>',
+ spark:'<path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/>',
+ term:'<path d="m7 9 3 3-3 3M13 15h4"/><rect x="3" y="4" width="18" height="16" rx="2"/>'};
+function mountActions(){
+ document.querySelectorAll(".doc").forEach(el=>{
+  if(el.querySelector(".pgacts")||el.id==="doc-graph")return;
+  const slug=el.id.replace("doc-","");
+  el.classList.add("docwrap");
+  // Must be idempotent: an earlier pass can abort mid-loop, leaving a doc
+  // with a titlerow but no actions. Look for the h1 in either position.
+  const h1=el.querySelector(":scope > h1, :scope > .titlerow > h1");
+  if(!h1)return;
+  let row=el.querySelector(":scope > .titlerow");
+  if(!row){row=document.createElement("div");row.className="titlerow";
+    h1.parentNode.insertBefore(row,h1);row.appendChild(h1);}
+  const w=document.createElement("div");w.className="pgacts";
+  w.innerHTML=`<button class="pgbtn" data-a="copy">${svg("copy",14)}Copy page</button>
+   <button class="pgbtn" data-a="menu"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg></button>`;
+  const m=document.createElement("div");m.className="pgmenu";m.dataset.slug=slug;
+  m.innerHTML=[["copy","copy","Copy page","Copy as Markdown for LLMs"],
+   ["spark","claude","Open in Claude","Copies the page, then opens claude.ai"],
+   ["bot","gpt","Open in ChatGPT","Copies the page, then opens chatgpt.com"],
+   ["term","bundle","Copy whole bundle","Every document as one Markdown file"]]
+   .map(([i,a,t,d])=>`<button data-a="${a}"><span class="mi">${svgI(i,14)}</span>
+     <span><span class="mt">${t}</span><span class="md">${d}</span></span></button>`).join("");
+  w.appendChild(m);row.appendChild(w);
+ });
+}
+const svgI=(n,s)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${MI[n]||MI.copy}</svg>`;
+document.addEventListener("click",e=>{
+ const b=e.target.closest(".pgbtn,.pgmenu button");
+ document.querySelectorAll(".pgmenu.on").forEach(m=>{if(!m.contains(e.target))m.classList.remove("on")});
+ if(!b)return;
+ const host=b.closest(".doc"),slug=host.id.replace("doc-",""),a=b.dataset.a;
+ if(a==="menu"){host.querySelector(".pgmenu").classList.toggle("on");return}
+ if(a==="copy"){copyMd(slug);host.querySelector(".pgmenu").classList.remove("on");return}
+ if(a==="claude"||a==="gpt"){copyMd(slug,"Copied — paste into the chat");
+  open(a==="claude"?"https://claude.ai/new":"https://chatgpt.com/","_blank","noopener");
+  host.querySelector(".pgmenu").classList.remove("on");return}
+ if(a==="bundle"){const all=DOCS.map(d=>pageMd(d.slug)).join("\n\n---\n\n");
+  navigator.clipboard.writeText(all).then(()=>toast(`Copied ${DOCS.length} documents`),()=>toast("Copy failed"));
+  host.querySelector(".pgmenu").classList.remove("on")}
+});
+
+/* ── code copy buttons ─────────────────────────────────────── */
+function mountCode(){document.querySelectorAll("pre:not(.mermaid)").forEach(pre=>{
+ if(pre.parentElement.classList.contains("pre-w"))return;
+ const w=document.createElement("div");w.className="pre-w";
+ pre.parentNode.insertBefore(w,pre);w.appendChild(pre);
+ const b=document.createElement("button");b.className="cpy";b.title="Copy";b.innerHTML=svgI("copy",13);
+ b.onclick=()=>{navigator.clipboard.writeText(pre.innerText).then(()=>toast("Code copied"))};
+ w.appendChild(b)})}
+
+/* ── ⌘K command palette ────────────────────────────────────── */
+(function(){
+ const k=document.createElement("div");k.id="cmdk";k.innerHTML=`<div id="cmdbox">
+  <input id="cmdin" placeholder="Search documents and headings…" autocomplete="off">
+  <div id="cmdlist"></div>
+  <div id="cmdfoot"><span><kbd>↑</kbd><kbd>↓</kbd> navigate</span><span><kbd>↵</kbd> open</span><span><kbd>esc</kbd> close</span></div></div>`;
+ document.body.appendChild(k);
+ const inp=k.querySelector("#cmdin"),list=k.querySelector("#cmdlist");let sel=0,rows=[];
+ const IDX=[];DOCS.forEach(d=>{IDX.push({t:d.title,g:d.group,s:d.slug,sub:d.type});
+  (d.src||"").split("\n").filter(l=>/^#{2,3} /.test(l)).forEach(h=>
+    IDX.push({t:h.replace(/^#+ /,""),g:d.title,s:d.slug,sub:"heading"}))});
+ IDX.push({t:"Knowledge graph",g:"Overview",s:"graph",sub:"view"});
+ function render(q){const f=q.toLowerCase().trim();
+  rows=(!f?IDX.slice(0,14):IDX.filter(r=>r.t.toLowerCase().includes(f)||r.g.toLowerCase().includes(f)).slice(0,40));
+  sel=0;
+  list.innerHTML=rows.length?rows.map((r,i)=>`<div class="cmdi ${i===0?"sel":""}" data-i="${i}">
+    <span class="ct">${esc(r.t)}<span class="cs">${esc(r.g)}</span></span><span class="cg">${esc(r.sub)}</span></div>`).join("")
+   :`<div class="cmdempty">No matches</div>`}
+ function go(){const r=rows[sel];if(!r)return;location.hash=r.s;close()}
+ function openK(){k.classList.add("on");inp.value="";render("");inp.focus()}
+ function close(){k.classList.remove("on")}
+ addEventListener("keydown",e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();k.classList.contains("on")?close():openK();return}
+  if(!k.classList.contains("on"))return;
+  if(e.key==="Escape"){close();e.preventDefault()}
+  else if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+   sel=Math.max(0,Math.min(rows.length-1,sel+(e.key==="ArrowDown"?1:-1)));
+   [...list.children].forEach((c,i)=>c.classList.toggle("sel",i===sel));
+   list.children[sel]?.scrollIntoView({block:"nearest"});e.preventDefault()}
+  else if(e.key==="Enter"){go();e.preventDefault()}});
+ inp.oninput=e=>render(e.target.value);
+ list.onclick=e=>{const r=e.target.closest(".cmdi");if(r){sel=+r.dataset.i;go()}};
+ k.onclick=e=>{if(e.target===k)close()};
+ document.getElementById("q").addEventListener("focus",e=>{e.target.blur();openK()});
+})();
+
+/* first mount: paint() ran before these definitions existed (TDZ), so its
+   mount calls threw. Do it once here; later navigations hit paint() normally. */
+addEventListener("DOMContentLoaded",()=>{});
+/* ── scroll-spy on the rail ────────────────────────────────── */
+let spy=null;
+function mountSpy(el){
+ if(spy)spy.disconnect();
+ const hs=[...el.querySelectorAll("h2,h3")];if(hs.length<2)return;
+ spy=new IntersectionObserver(es=>{
+  const vis=es.filter(x=>x.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top);
+  if(!vis.length)return;const id=vis[0].target.id;
+  document.querySelectorAll("[data-toc]").forEach(a=>a.classList.toggle("here",a.getAttribute("href")==="#"+id));
+ },{root:document.querySelector("main"),rootMargin:"-8% 0px -72% 0px",threshold:0});
+ hs.forEach(h=>spy.observe(h));
+}
+
+(function(){const el=document.querySelector(".doc.on");
+ if(el){try{mountActions();mountCode();mountSpy(el)}catch(e){console.error("okflify mount:",e)}}})();
+
+/* ── lightbox ──────────────────────────────────────────────── */
+(function(){
+ const lb=document.createElement("div");lb.id="lb";lb.innerHTML=`
+  <div id="lbstage"><div id="lbinner"></div></div>
+  <div id="lbhint"><kbd>scroll</kbd> zoom · <kbd>space</kbd>+drag or drag to pan ·
+   <kbd>+</kbd><kbd>−</kbd> zoom · <kbd>0</kbd> fit · <kbd>1</kbd> 100% ·
+   <kbd>↑↓←→</kbd> nudge · <kbd>esc</kbd> close</div>
+  <button id="lbclose" title="Close (esc)">
+   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  <div id="lbbar">
+   <button data-z="out" title="Zoom out (−)">−</button>
+   <div id="lbpct">100%</div>
+   <button data-z="in" title="Zoom in (+)">+</button>
+   <div id="lbsep"></div>
+   <button data-z="fit" title="Fit (0)">Fit</button>
+   <button data-z="one" title="Actual size (1)">1:1</button>
+  </div>`;
+ document.body.appendChild(lb);
+ const stage=lb.querySelector("#lbstage"),inner=lb.querySelector("#lbinner"),pct=lb.querySelector("#lbpct");
+ let sc=1,tx=0,ty=0,base=1,nat={w:0,h:0},panning=false,spc=false,px=0,py=0;
+
+ const apply=(smooth)=>{inner.classList.toggle("free",!smooth);
+   inner.style.transform=`translate(${tx}px,${ty}px) scale(${sc}) translate(-50%,-50%)`;
+   pct.textContent=Math.round(sc/base*100)+"%"};
+ function fit(smooth=true){
+   const pad=90,W=innerWidth-pad*2,H=innerHeight-pad*2;
+   base=Math.min(W/nat.w,H/nat.h,1.6)||1;sc=base;tx=0;ty=0;apply(smooth)}
+ function zoomAt(f,cx,cy,smooth=false){
+   const n=Math.min(Math.max(sc*f,base*0.25),base*14);
+   const ox=cx-innerWidth/2-tx, oy=cy-innerHeight/2-ty;
+   tx-=ox*(n/sc-1); ty-=oy*(n/sc-1); sc=n; apply(smooth)}
+
+ function open(src){
+   const clone=src.cloneNode(true);
+   clone.removeAttribute("style");clone.removeAttribute("width");clone.removeAttribute("height");
+   let w=0,h=0;
+   if(clone.tagName.toLowerCase()==="svg"){
+     const vb=src.viewBox&&src.viewBox.baseVal;
+     w=(vb&&vb.width)||src.getBoundingClientRect().width;
+     h=(vb&&vb.height)||src.getBoundingClientRect().height;
+     clone.setAttribute("width",w);clone.setAttribute("height",h);
+   }else{w=src.naturalWidth||src.getBoundingClientRect().width;h=src.naturalHeight||src.getBoundingClientRect().height}
+   nat={w:w||800,h:h||600};
+   inner.innerHTML="";inner.appendChild(clone);
+   lb.classList.add("on");document.body.style.overflow="hidden";fit(false);
+ }
+ function close(){lb.classList.remove("on");document.body.style.overflow="";inner.innerHTML=""}
+
+ document.addEventListener("click",e=>{
+   if(lb.classList.contains("on"))return;
+   const m=e.target.closest(".mermaid");
+   if(m){const svg=m.querySelector("svg");if(svg){e.preventDefault();open(svg);return}}
+   const img=e.target.closest(".body img");if(img){e.preventDefault();open(img)}
+ });
+ lb.querySelector("#lbclose").onclick=close;
+ stage.addEventListener("mousedown",e=>{if(e.button!==0)return;
+   panning=true;px=e.clientX;py=e.clientY;stage.classList.add("grabbing");e.preventDefault()});
+ addEventListener("mousemove",e=>{if(!panning)return;
+   tx+=e.clientX-px;ty+=e.clientY-py;px=e.clientX;py=e.clientY;apply(false)});
+ addEventListener("mouseup",()=>{panning=false;stage.classList.remove("grabbing")});
+ stage.addEventListener("wheel",e=>{e.preventDefault();
+   if(e.shiftKey&&!e.ctrlKey&&!e.metaKey){tx-=e.deltaY;apply(false);return}
+   zoomAt(e.deltaY<0?1.14:1/1.14,e.clientX,e.clientY)},{passive:false});
+ stage.addEventListener("dblclick",e=>{
+   if(sc>base*1.05)fit();else zoomAt(2.2,e.clientX,e.clientY,true)});
+ addEventListener("keydown",e=>{
+   if(!lb.classList.contains("on")){return}
+   const k=e.key;
+   if(k==="Escape"){close();e.preventDefault();return}
+   if(k===" "&&!spc){spc=true;stage.classList.add("grab");e.preventDefault();return}
+   if(k==="+"||k==="="){zoomAt(1.25,innerWidth/2,innerHeight/2,true);e.preventDefault()}
+   else if(k==="-"||k==="_"){zoomAt(1/1.25,innerWidth/2,innerHeight/2,true);e.preventDefault()}
+   else if(k==="0"){fit();e.preventDefault()}
+   else if(k==="1"){const f=1/base;zoomAt(f*base/sc*base,innerWidth/2,innerHeight/2,true);sc=1*base/base;sc=1;apply(true);e.preventDefault()}
+   else if(k.startsWith("Arrow")){const d=e.shiftKey?110:36;
+     if(k==="ArrowUp")ty+=d;if(k==="ArrowDown")ty-=d;if(k==="ArrowLeft")tx+=d;if(k==="ArrowRight")tx-=d;
+     apply(true);e.preventDefault()}
+ });
+ addEventListener("keyup",e=>{if(e.key===" "){spc=false;stage.classList.remove("grab")}});
+ addEventListener("resize",()=>{if(lb.classList.contains("on"))fit(false)});
+ lb.querySelector("#lbbar").addEventListener("click",e=>{
+   const b=e.target.closest("[data-z]");if(!b)return;const z=b.dataset.z;
+   if(z==="in")zoomAt(1.25,innerWidth/2,innerHeight/2,true);
+   else if(z==="out")zoomAt(1/1.25,innerWidth/2,innerHeight/2,true);
+   else if(z==="fit")fit();
+   else{sc=1;tx=0;ty=0;apply(true)}});
+})();
+
+</script></body></html>

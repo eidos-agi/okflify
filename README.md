@@ -6,9 +6,11 @@ One command, one self-contained file. No server, no build pipeline, no dependenc
 
 ```sh
 pip install -e .
-okflify --example --open     # see it work: okflify's own docs, as a bundle
+okflify --example --open   # see it work: okflify's own docs, as a bundle
 okflify ~/path/to/bundle --open
 ```
+
+**[See it live →](https://eidos-agi.github.io/okflify/)** — the rendered example, no install.
 
 **Start with `--example`.** The [`example/`](example/) bundle *is* okflify's
 documentation — written as an OKF bundle, rendered by the tool it documents. If

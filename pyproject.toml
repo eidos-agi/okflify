@@ -22,4 +22,11 @@ build-backend = "setuptools.build_meta"
 include = ["okflify*"]
 
 [tool.setuptools.package-data]
-okflify = ["template.html"]
+okflify = [
+  "template.html",
+  "example/*.md",
+  "example/*.json",
+  "example/concepts/*.md",
+  "example/evidence/*.md",
+  "example/learnings/*.md",
+]

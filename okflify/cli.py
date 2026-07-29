@@ -21,7 +21,7 @@ def main(argv=None):
 
     if a.example:
         import okflify
-        a.bundle = str(pathlib.Path(okflify.__file__).parent.parent / "example")
+        a.bundle = str(pathlib.Path(okflify.__file__).parent / "example")
     r = build(a.bundle, a.out, a.template)
     print(f"okflify → {r['out']} — {r['docs']} documents, {r['edges']} edges, {r['diagrams']} diagrams")
     if r["edges"] == 0 and r["docs"] > 1:

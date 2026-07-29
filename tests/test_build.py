@@ -10,7 +10,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 from okflify.build import frontmatter, inl, discover, build
 
 ROOT = pathlib.Path(__file__).parent.parent
-EXAMPLE = ROOT / "example"
+EXAMPLE = ROOT / "okflify" / "example"
 
 
 def nav(md_link):
