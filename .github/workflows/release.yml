@@ -1,0 +1,72 @@
+# Publish to PyPI on a version tag, via Trusted Publishing (OIDC).
+#
+# No API token anywhere — not in secrets, not in the vault, not in a shell. PyPI
+# verifies the workflow identity directly, which is why the vault notes trusted
+# publishing as the primary path and the stored token as a manual fallback.
+#
+# One-time setup on PyPI (a human, in the web UI):
+#   pypi.org → Your projects → Publishing → Add a pending publisher
+#     owner: eidos-agi   repository: okflify
+#     workflow: release.yml   environment: pypi
+#
+# Then release with:
+#   git tag v0.1.2 && git push --tags
+#
+# A version can never be reused on PyPI, so the tag must match pyproject and the
+# job refuses to publish if it does not.
+
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write      # required for trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: tag must match pyproject version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          proj=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)
+          echo "tag=$tag pyproject=$proj"
+          [ "$tag" = "$proj" ] || { echo "::error::tag $tag != pyproject $proj"; exit 1; }
+
+      - run: pip install build twine
+      - run: python -m build
+
+      - name: the wheel must carry the example bundle
+        # An earlier build shipped zero example files, so `okflify --example`
+        # would have crashed for every PyPI user while working from a checkout.
+        # PyPI cannot un-publish a version, so this is checked before upload.
+        run: |
+          python - <<'PY'
+          import glob, zipfile, sys
+          whl = glob.glob("dist/*.whl")[0]
+          names = zipfile.ZipFile(whl).namelist()
+          n = sum(1 for x in names if "/example/" in x)
+          print(f"{whl}: {n} example files")
+          if n < 5:
+              sys.exit("example bundle missing from the wheel")
+          if not any("template.html" in x for x in names):
+              sys.exit("template.html missing from the wheel")
+          PY
+
+      - run: python -m twine check dist/*
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        # no `password:` — OIDC
