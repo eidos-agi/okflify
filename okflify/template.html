@@ -618,8 +618,23 @@ document.addEventListener("click",e=>{
  const host=b.closest(".doc"),slug=host.id.replace("doc-",""),a=b.dataset.a;
  if(a==="menu"){host.querySelector(".pgmenu").classList.toggle("on");return}
  if(a==="copy"){copyMd(slug);host.querySelector(".pgmenu").classList.remove("on");return}
- if(a==="claude"||a==="gpt"){copyMd(slug,"Copied — paste into the chat");
-  open(a==="claude"?"https://claude.ai/new":"https://chatgpt.com/","_blank","noopener");
+ if(a==="claude"||a==="gpt"){
+  // Opening a blank chat and telling the user to paste is not "open in".
+  // Hand the document over: both accept a ?q= prompt. Fall back only when the
+  // page is too long for a URL, and say so rather than failing quietly.
+  const base=a==="claude"?"https://claude.ai/new":"https://chatgpt.com/";
+  const md=pageMd(slug), enc=encodeURIComponent(md);
+  const pub=/^https?:$/.test(location.protocol)?location.href.split("#")[0]+"#"+slug:null;
+  let url,msg;
+  if(enc.length<6000){ url=base+"?q="+enc; msg="Opening with the page attached"; }
+  else if(pub){
+    const ask=`Read ${pub} — an OKF v0.2 knowledge document, "${B[slug].title}". `+
+              `Answer questions about it and respect its verification tier `+
+              `(${(B[slug].verified||{}).by||"unknown"}).`;
+    url=base+"?q="+encodeURIComponent(ask); msg="Opening with a link to this page";
+  } else { copyMd(slug,"Too long for a link — copied, paste into the chat"); url=base; msg=null; }
+  if(msg) toast(msg);
+  open(url,"_blank","noopener");
   host.querySelector(".pgmenu").classList.remove("on");return}
  if(a==="bundle"){const all=DOCS.map(d=>pageMd(d.slug)).join("\n\n---\n\n");
   navigator.clipboard.writeText(all).then(()=>toast(`Copied ${DOCS.length} documents`),()=>toast("Copy failed"));
