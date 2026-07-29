@@ -25,7 +25,7 @@ html[data-t="dark"]{
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
-body{background:var(--bg);color:var(--ink2);font:400 16px/1.66 var(--fb);
+body{background:var(--bg);color:var(--ink2);font:400 16px/1.55 var(--fb);
  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
 ::selection{background:var(--accbg);color:var(--ink)}
 a{color:var(--acc);text-decoration:none}
@@ -78,7 +78,7 @@ aside a.n.on{color:var(--acc);font-weight:550;background:var(--accbg)}
 /* content */
 main{flex:1;min-width:0;overflow-y:auto;height:calc(100vh - 60px);scroll-behavior:smooth}
 .cols{display:flex;gap:3rem;max-width:74rem;margin:0 auto;padding:2.8rem 3rem 9rem;align-items:flex-start}
-.body{flex:1;min-width:0;max-width:44rem}
+.body{flex:1;min-width:0;max-width:42rem}   /* ~72ch at 16px */
 .rail{width:186px;flex:none;position:sticky;top:1rem;font-size:.8rem;
  max-height:calc(100vh - 9rem);overflow-y:auto;overflow-x:hidden}
 .rail .rh{display:flex;gap:.45rem;align-items:center;color:var(--ink);font:600 .78rem/1 var(--fb);margin-bottom:.75rem}
@@ -96,14 +96,14 @@ main{flex:1;min-width:0;overflow-y:auto;height:calc(100vh - 60px);scroll-behavio
 
 /* prose — Mintlify weights: light headings, roomy body */
 h1{font:600 2.45rem/1.15 var(--fh);letter-spacing:-.038em;color:var(--ink);margin:0 0 .55rem}
-h2{font:600 1.5rem/1.3 var(--fh);letter-spacing:-.025em;color:var(--ink);margin:3.2rem 0 .9rem;scroll-margin-top:2rem}
+h2{font:600 1.45rem/1.3 var(--fh);letter-spacing:-.025em;color:var(--ink);margin:2.8rem 0 .8rem;scroll-margin-top:2rem}
 h3{font:600 1.13rem/1.4 var(--fh);letter-spacing:-.016em;color:var(--ink);margin:2.2rem 0 .6rem;scroll-margin-top:2rem}
 h4{font:600 .95rem/1.5 var(--fb);color:var(--ink);margin:1.6rem 0 .4rem}
-p{margin:.85rem 0;color:var(--ink2);font-size:1rem}
+p{margin:0 0 1.15rem;color:var(--ink2);font-size:1rem}  /* gap 18px vs 10px between lines */
 strong{color:var(--ink);font-weight:600}
 .body>p:first-of-type,.eyebrow+h1+p{font-size:1.08rem;color:var(--mut)}
 ul,ol{margin:.85rem 0;padding-left:1.3rem}
-li{margin:.38rem 0;color:var(--ink2)}li::marker{color:var(--faint)}
+li{margin:.3rem 0;color:var(--ink2)}li::marker{color:var(--faint)}
 hr{border:0;border-top:1px solid var(--line);margin:2.6rem 0}
 code{font:.86em ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--line2);color:var(--ink);
  padding:.15em .4em;border-radius:5px;border:1px solid var(--line)}
@@ -235,6 +235,17 @@ tbody tr:hover{background:var(--line2)}
 .pre-w>.cpy:hover{color:var(--acc);border-color:var(--acc)}
 @media print{#cmdk,.pgacts,.pgmenu,#toast,.cpy{display:none!important}}
 
+
+/* ── whole-bundle view ─────────────────────────────────────── */
+.allsec{padding:2.4rem 0;border-top:1px solid var(--line)}
+.allsec:first-child{border-top:0;padding-top:.5rem}
+.allmeta{display:flex;align-items:center;gap:.5rem;font-size:.72rem;color:var(--faint);margin-bottom:.5rem}
+.allmeta .ab{font-weight:600;color:var(--mut)}
+.allmeta .ak{font-family:ui-monospace,monospace}
+.allmeta .ao{margin-left:auto;color:var(--acc);text-decoration:none;border:0}
+.alltitle{margin:.1rem 0 .5rem!important;font-size:1.5rem!important}
+.alltrust{font:.75rem/1.55 ui-monospace,monospace;color:var(--faint);
+ border-left:2px solid var(--line);padding-left:.7rem;margin:0 0 1.1rem}
 
 /* ── tree view ─────────────────────────────────────────────── */
 .tree{font-size:.9rem;margin:1.2rem 0}
@@ -382,7 +393,7 @@ document.documentElement.dataset.decor="__DECOR__";
 /* nav */
 const G0=[];DOCS.forEach(d=>{let g=G0.find(x=>x.n===d.group);if(!g){g={n:d.group,i:[]};G0.push(g)}g.i.push(d)});
 function nav(f=""){const q=f.toLowerCase();
- let h=`<div class="sec">${svg(GI.Overview,15)}Overview</div><a class="n" href="#graph" data-nav="graph">Knowledge graph</a><a class="n" href="#tree" data-nav="tree">Tree</a>`;
+ let h=`<div class="sec">${svg(GI.Overview,15)}Overview</div><a class="n" href="#graph" data-nav="graph">Knowledge graph</a><a class="n" href="#tree" data-nav="tree">Tree</a><a class="n" href="#all" data-nav="all">Whole bundle</a>`;
  let hits=0;
  h+=G0.map(g=>{const it=g.i.filter(d=>!q||d.title.toLowerCase().includes(q)||d.slug.includes(q)||String(d.tags||"").toLowerCase().includes(q));
    hits+=it.length;if(!it.length)return"";
@@ -406,6 +417,12 @@ document.getElementById("body").innerHTML=DOCS.map(d=>{
  const eb=EYEBROW==="section"?`<div class="eyebrow">${esc(d.bundle?d.bundle+" · "+(d.section||""):d.group)}</div>`:"";
  const h1=`<h1>${esc(d.title)}</h1>`;
  return `<article class="doc" id="doc-${d.slug}">${eb}${h1}${tr}${d.html}${rel}</article>`}).join("")+
+`<article class="doc" id="doc-all"><div class="eyebrow">Overview</div>
+ <h1>Whole bundle</h1>
+ <p>Every document in reading order, on one page — for skimming end to end, searching with <kbd>⌘F</kbd>, or handing the lot to someone. Each keeps its verification tier, because a claim read in sequence is no better evidenced than one read alone.</p>
+ <div class="tbar"><button class="ib" onclick="copyAll()">Copy all as Markdown</button>
+ <button class="ib" onclick="print()">Print</button></div>
+ <div id="allhost"></div></article>`+
 `<article class="doc" id="doc-tree"><div class="eyebrow">Overview</div>
  <h1>Tree</h1>
  <p>The containment view: bundle → section → document. OKF's <em>meaning</em> lives in the links between documents — see the <a href="#graph" data-nav="graph">knowledge graph</a> — but at this size a hierarchy is what you can actually navigate. Directories are storage; this is that storage, made legible.</p>
@@ -449,6 +466,26 @@ function resetMermaid(){
 document.querySelectorAll(".ci").forEach(e=>e.innerHTML=svg(e.dataset.i,17));
 
 /* graph */
+function buildAll(){
+  const host=document.getElementById("allhost"); if(!host||host.dataset.built) return;
+  host.dataset.built="1";
+  host.innerHTML=DOCS.map(d=>{
+    const v=d.verified||{}, t=tier(v.by);
+    return `<section class="allsec">
+      <div class="allmeta"><span class="dot ${t}"></span>
+        <span class="ab">${esc(d.bundle||"")}</span>
+        <span class="ak">${esc(d.section||d.group)} · ${esc(d.type)}</span>
+        <a class="ao" href="#${d.slug}" data-nav="${d.slug}">open ↗</a></div>
+      <h2 class="alltitle">${esc(d.title)}</h2>
+      ${v.by?`<p class="alltrust">${esc(v.by)} · ${esc(v.at||"—")}${v.method?" — "+esc(v.method):""}</p>`:""}
+      ${d.html}</section>`}).join("");
+  const n=host.querySelectorAll(".mermaid");
+  if(n.length) mermaid.run({nodes:n}).then(()=>sizeDiagrams(host));
+}
+function copyAll(){
+  navigator.clipboard.writeText(DOCS.map(d=>pageMd(d.slug)).join("\n\n---\n\n"))
+    .then(()=>toast(`Copied ${DOCS.length} documents`),()=>toast("Copy failed"));
+}
 function buildTree(){
   const host=document.getElementById("treehost"); if(!host) return;
   const bundles={};
@@ -554,6 +591,7 @@ function paint(){
    which would leave the sidebar unbuilt. */}
  if(s==="graph")G();
  if(s==="tree")buildTree();
+ if(s==="all")buildAll();
  document.querySelector("main").scrollTop=0;
 }
 document.addEventListener("click",e=>{
