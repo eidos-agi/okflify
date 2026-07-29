@@ -40,7 +40,19 @@ def inl(s: str) -> str:
         text, href = m.group(1), m.group(2)
         if re.match(r"^https?://", href):
             return f'<a href="{href}" target="_blank" rel="noopener">{text}</a>'
-        slug = href.split("/")[-1].replace(".md", "")
+        # Resolve within a bundle AND across bundles in a catalogue.
+        # "../other-bundle/index.md" -> other-bundle/index ; "concepts/x.md" -> {BUNDLE}/x
+        parts = [x for x in href.replace(".md", "").split("/") if x not in ("", ".")]
+        up = parts.count("..")
+        parts = [x for x in parts if x != ".."]
+        if not parts:
+            return text
+        if up and len(parts) >= 2:
+            slug = f"{parts[-2]}/{parts[-1]}"
+        elif up == 1:
+            slug = f"{parts[-1]}/index"
+        else:
+            slug = "{BUNDLE}/" + parts[-1]
         return f'<a href="#{slug}" data-nav="{slug}">{text}</a>'
     return re.sub(r"\[([^\]]+)\]\(([^)]+)\)", link, s)
 
@@ -136,7 +148,26 @@ def frontmatter(text: str):
 
 # ── collect ─────────────────────────────────────────────────────────────────
 
-def collect(bundle: pathlib.Path):
+def discover(root: pathlib.Path):
+    """Return the bundles under `root`.
+
+    A catalogue is a directory of bundles (root/bundles/<slug>/ or root/<slug>/,
+    each with an index.md). A single bundle is its own catalogue of one. OKF says
+    nothing about this layer — it is purely how people file bundles on disk.
+    """
+    if (root / "index.md").is_file():
+        return [root]
+    for parent in (root / "bundles", root):
+        if not parent.is_dir():
+            continue
+        found = sorted(d for d in parent.iterdir()
+                       if d.is_dir() and (d / "index.md").is_file())
+        if found:
+            return found
+    return []
+
+
+def collect(bundle: pathlib.Path, label: str | None = None):
     """Walk an OKF bundle. Directories are storage, nothing more."""
     docs = []
 
@@ -150,7 +181,12 @@ def collect(bundle: pathlib.Path):
         if fm.get("title"):
             body = re.sub(r"\A\s*#\s+[^\n]*\n+", "", body, count=1)
         docs.append(dict(
-            slug=path.stem, group=group, file=str(path.relative_to(bundle)),
+            slug=(f"{label}/{path.stem}" if label else path.stem),
+            bundle=label or "",
+            # Catalogue view: 18 bundles' concepts in one "Concepts" group is
+            # useless. Group by bundle instead; section survives as `section`.
+            group=(label or group), section=group,
+            file=str(path.relative_to(bundle)),
             title=fm.get("title") or path.stem, type=fm.get("type", "—"),
             status=fm.get("status", ""), tags=fm.get("tags", ""),
             verified=fm.get("verified") or {}, html=md(body), src=body,
@@ -217,7 +253,20 @@ def build(bundle="." , out=None, template=None):
         raise SystemExit(f"okflify: not a directory: {bundle}")
     out = pathlib.Path(out or bundle / "okflify.html")
 
-    docs = collect(bundle)
+    found = discover(bundle)
+    multi = len(found) > 1
+    docs = []
+    for b in found:
+        label = b.name if multi else None
+        got = collect(b, label)
+        if multi:
+            # resolve the same-bundle placeholder now that the label is known
+            for d in got:
+                d["html"] = d["html"].replace("{BUNDLE}", label)
+        else:
+            for d in got:
+                d["html"] = d["html"].replace("{BUNDLE}/", "")
+        docs += got
     if not docs:
         raise SystemExit(
             f"okflify: no OKF documents under {bundle}\n"
@@ -225,9 +274,11 @@ def build(bundle="." , out=None, template=None):
         )
     edges = link_graph(docs)
 
-    idx = bundle / "index.md"
+    idx = (found[0] / "index.md") if found else (bundle / "index.md")
     root_fm, _ = frontmatter(idx.read_text()) if idx.exists() else ({}, "")
     cfg_path = bundle / "docs.json"
+    if not cfg_path.exists() and found:
+        cfg_path = found[0] / "docs.json"
     cfg = json.loads(cfg_path.read_text()) if cfg_path.exists() else {}
 
     # bundle-local template wins, else the packaged one
