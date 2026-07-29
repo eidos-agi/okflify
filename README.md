@@ -37,7 +37,8 @@ Most renderers throw that away and print a folder tree. okflify extracts the lin
 bundle/
   index.md          # type: investigation — the root
   log.md            # append-only, no frontmatter by convention
-  concepts/*.md     # claims, rules, learnings
+  concepts/*.md     # claims, rules — ANY md-bearing subdirectory becomes a group
+  facts/*.md        # (facts/, architecture/, runtime/… all scanned since 28a8cf3)
   evidence/*.md     # evidence pointers
   learnings/*.md    # promoted, re-verified
   docs.json         # optional theming
