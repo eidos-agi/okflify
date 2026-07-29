@@ -11,6 +11,7 @@ okflify ~/path/to/bundle --open
 ```
 
 **[See it live →](https://eidos-agi.github.io/okflify/)** — the rendered example, no install.
+Rebuilt from source by CI on every push to `master`, so the demo cannot drift from the renderer.
 
 **Start with `--example`.** The [`example/`](example/) bundle *is* okflify's
 documentation — written as an OKF bundle, rendered by the tool it documents. If

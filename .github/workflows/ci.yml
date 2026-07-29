@@ -1,0 +1,92 @@
+# Test on every push; rebuild and publish the rendered example on master.
+#
+# The demo is generated output. Committing it by hand means it drifts from the
+# renderer the first time template.html changes and nobody re-runs okflify —
+# and a stale demo of a knowledge tool is worse than none. So it is built here,
+# from source, on every push to master, and deployed straight to Pages.
+#
+# okflify builds itself: the site published below is produced by the tool it
+# documents. If the renderer breaks, this job fails and nothing is published.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - name: pytest
+        run: python -m pytest -q
+
+      - name: build the example bundle
+        run: |
+          python -m okflify --example -o /tmp/example.html
+          test -s /tmp/example.html
+
+      - name: the demo must not be empty
+        # A renderer can "succeed" and emit a page with no documents. Assert the
+        # artifact actually carries the bundle rather than trusting exit 0.
+        run: |
+          python - <<'PY'
+          import pathlib, re, sys
+          html = pathlib.Path("/tmp/example.html").read_text()
+          docs = re.search(r'const DOCS=(\[.*?\]),EDGES=', html, re.S)
+          if not docs:
+              sys.exit("DOCS payload missing — the page would render empty")
+          n = docs.group(1).count('"slug":')
+          print(f"documents in artifact: {n}")
+          if n < 5:
+              sys.exit(f"only {n} documents — the example bundle did not ship")
+          for placeholder in ("__DOCS__", "__PRIMARY__", "__FONT_BODY__"):
+              if placeholder in html:
+                  sys.exit(f"unfilled template placeholder: {placeholder}")
+          print("artifact ok")
+          PY
+
+  pages:
+    name: publish demo
+    if: github.ref == 'refs/heads/master'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+
+      - name: render the example
+        run: |
+          mkdir -p _site
+          python -m okflify --example -o _site/index.html
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

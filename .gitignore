@@ -5,6 +5,7 @@ dist/
 build/
 *.html
 !okflify/template.html
-# the rendered example IS the demo — it must be viewable without installing
-!docs/index.html
+# the demo is built by CI and deployed to Pages — never committed, so it cannot
+# drift from the renderer that produces it
+_site/
 .DS_Store
