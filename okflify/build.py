@@ -47,7 +47,13 @@ def inl(s: str) -> str:
         parts = [x for x in parts if x != ".."]
         if not parts:
             return text
-        if up and len(parts) >= 2:
+        # "../learnings/x.md" is a SECTION hop inside one bundle;
+        # "../other-bundle/index.md" is a bundle hop. Structurally identical,
+        # so disambiguate on the known section names.
+        SECTIONS = {"concepts", "evidence", "learnings"}
+        if up and len(parts) >= 2 and parts[-2] in SECTIONS:
+            slug = "{BUNDLE}/" + parts[-1]
+        elif up and len(parts) >= 2:
             slug = f"{parts[-2]}/{parts[-1]}"
         elif up == 1:
             slug = f"{parts[-1]}/index"

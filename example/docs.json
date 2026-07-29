@@ -1,0 +1,8 @@
+{
+  "name": "okflify",
+  "colors": { "primary": "#2E6F5E", "light": "#6FC7AC", "dark": "#1F5044" },
+  "fonts": { "family": "Inter", "heading": "Inter" },
+  "appearance": { "default": "system" },
+  "background": { "decoration": "gradient" },
+  "styling": { "eyebrows": "section" }
+}

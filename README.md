@@ -6,8 +6,13 @@ One command, one self-contained file. No server, no build pipeline, no dependenc
 
 ```sh
 pip install -e .
+okflify --example --open     # see it work: okflify's own docs, as a bundle
 okflify ~/path/to/bundle --open
 ```
+
+**Start with `--example`.** The [`example/`](example/) bundle *is* okflify's
+documentation — written as an OKF bundle, rendered by the tool it documents. If
+the renderer breaks, that page does not build, so the docs cannot drift.
 
 ```
 okflify → bundle/okflify.html — 9 documents, 7 edges, 13 diagrams
