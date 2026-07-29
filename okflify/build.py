@@ -112,7 +112,18 @@ def md(text: str) -> str:
                 it.append(inl(re.sub(r"^\d+\.\s+", "", lines[i]))); i += 1
             out.append("<ol>" + "".join(f"<li>{x}</li>" for x in it) + "</ol>"); continue
         if l.strip() == "---": out.append("<hr/>"); i += 1; continue
-        if l.strip(): out.append(f"<p>{inl(l)}</p>")
+        if l.strip():
+            # Markdown wraps a paragraph across source lines; a blank line ends
+            # it. Emitting one <p> per LINE made every wrapped line its own
+            # paragraph, so paragraph margin appeared between every line and no
+            # amount of CSS tuning could fix it.
+            buf = []
+            while i < len(lines) and lines[i].strip() \
+                    and not re.match(r"^(#{1,4} |[-*] |\d+\. |> |\||```)", lines[i]) \
+                    and lines[i].strip() != "---":
+                buf.append(lines[i].strip()); i += 1
+            out.append("<p>" + inl(" ".join(buf)) + "</p>")
+            continue
         i += 1
     return "\n".join(out)
 
