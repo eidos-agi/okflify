@@ -114,11 +114,14 @@ verified:
   "colors": { "primary": "#2E6F5E", "light": "#6FC7AC", "dark": "#1F5044" },
   "fonts": { "family": "Inter" },
   "appearance": { "default": "system" },
-  "background": { "decoration": "gradient" }
+  "background": { "decoration": "gradient" },
+  "home": { "href": "/boxes/", "label": "Boxes" }
 }
 ```
 
 Any Google Font name loads automatically. `background.decoration`: `gradient`, `grid`, `none`.
+
+**`home`** — optional return link to the **host app** (not the pack index). The pack logo still jumps to the first document; the host control is a separate **← label** in the header. When the HTML is opened full-page inside a product (e.g. Greenmark Boxes), set `home.href` to that product’s root. Runtime override: `?return=/path` or `?home=/path` (same-origin only), optional `returnLabel`.
 
 ## Notes from building it
 

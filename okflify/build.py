@@ -24,7 +24,11 @@ decoration, eyebrows. Never edit template.html to restyle.
 
 Generic: point it at any OKF v0.2 bundle.
 """
-import json, html, pathlib, re, sys
+import html
+import json
+import pathlib
+import re
+import sys
 
 HERE = pathlib.Path(__file__).parent
 
@@ -238,6 +242,33 @@ def link_graph(docs):
     return edges
 
 
+def host_home_html(cfg):
+    """Optional return link to the host app (not the OKF pack index).
+
+    docs.json:
+      "home": { "href": "/boxes/", "label": "Boxes" }
+    Also overridable at runtime with ?return= or ?home= query params (see template).
+    """
+    home = cfg.get("home") or cfg.get("return") or {}
+    if isinstance(home, str):
+        home = {"href": home}
+    href = (home.get("href") or home.get("url") or "").strip()
+    label = (home.get("label") or home.get("title") or "Home").strip() or "Home"
+    if not href:
+        # Placeholder still in DOM so ?return= can enable it at runtime
+        return (
+            '<a class="host-home" id="host-home" hidden href="/" data-host-home="1">'
+            '<span class="hh-arrow" aria-hidden="true">←</span>'
+            '<span class="hh-label">Home</span></a>'
+        )
+    return (
+        f'<a class="host-home" id="host-home" href="{html.escape(href)}" data-host-home="1" '
+        f'title="Back to {html.escape(label)}">'
+        f'<span class="hh-arrow" aria-hidden="true">←</span>'
+        f'<span class="hh-label">{html.escape(label)}</span></a>'
+    )
+
+
 def theme_tokens(cfg, root_fm):
     """Mintlify-shaped docs.json → template substitutions."""
     col, fon = cfg.get("colors", {}), cfg.get("fonts", {})
@@ -260,6 +291,7 @@ def theme_tokens(cfg, root_fm):
         "__EYEBROW__": cfg.get("styling", {}).get("eyebrows", "breadcrumbs"),
         "__DEFAULTMODE__": cfg.get("appearance", {}).get("default", "system"),
         "__BRANDNAME__": cfg.get("name", str(root_fm.get("title") or "")),
+        "__HOST_HOME__": host_home_html(cfg),
     }
 
 

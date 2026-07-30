@@ -75,6 +75,24 @@ class TestBuild:
         assert r["edges"] == 7
         assert r["out"].is_file()
 
+    def test_host_home_from_docs_json(self, tmp_path):
+        # Host app return is optional; when set, header must leave the pack.
+        b = tmp_path / "bundle"
+        b.mkdir()
+        (b / "index.md").write_text(
+            '---\nokf_version: "0.2"\ntype: claim\ntitle: "T"\n---\n\nbody\n'
+        )
+        (b / "docs.json").write_text(
+            '{"name":"Demo","home":{"href":"/app/","label":"App"}}'
+        )
+        out = tmp_path / "out.html"
+        build(b, out)
+        html_out = out.read_text()
+        assert 'id="host-home"' in html_out
+        assert 'href="/app/"' in html_out
+        assert "App" in html_out
+        assert "←" in html_out
+
     def test_output_is_self_contained(self, tmp_path):
         out = tmp_path / "out.html"
         build(EXAMPLE, out)
