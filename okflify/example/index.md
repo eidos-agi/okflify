@@ -1,61 +1,88 @@
 ---
 okf_version: "0.2"
 type: investigation
-title: "Why were the diagrams unreadable?"
-status: closed
-slug: example
-started: 2026-07-29
-tags: [rendering, mermaid, typography, example]
+title: "OKFlify — the detailed guide to OKF, ORF, and EMF"
+status: current
+slug: okflify-guide
+started: 2026-08-06
+tags: [okflify, okf, orf, emf, renderer, guide]
 sources:
   - repo: eidos-agi/okflify
+  - repo: eidos-agi/eidos-squiddie
+  - repo: eidos-agi/emf
 verified:
-  by: job:okflify-build
-  at: 2026-07-29
-  method: "every number below was measured in a headless browser; the commands are in the evidence page"
+  by: human:daniel
+  at: 2026-08-06
+  method: "stated directly: the point of the OKFlify build is to explain OKFlify, ORF, and EMF in great detail"
 ---
 
-# Investigation
+# OKFlify
 
-## Question
+OKFlify turns a directory of linked Markdown knowledge into **one readable,
+self-contained HTML file**. It is the reference reader for **OKF v0.2** and it
+also renders the additive **ORF v0.2.0** research profile and **EMF v0.1** memory
+profile.
 
-Diagrams on a documentation site were technically rendering — no errors, correct
-shapes — and nobody could read the labels. Why?
+The shortest useful model is:
 
-## Why it matters
+```mermaid
+flowchart LR
+  A["OKF bundle<br/>Markdown + frontmatter + links"] --> B["okflify bundle/"]
+  B --> C["one portable HTML file"]
+  D["ORF research fields"] --> A
+  E["EMF memory fields"] --> A
+```
 
-The failure was invisible to every check we had. The build passed. The DOM
-assertions passed. A human looked at a screenshot and said *"this is unreadable,"*
-which is the only test that caught it.
+OKFlify is deliberately small. It does not own the knowledge, edit it, host a
+database, or invent a second schema. It reads files already owned by a repo,
+makes their trust and relationships visible, and emits an artifact that opens
+from disk or can be served as a static page.
 
-This bundle is a real, small investigation, kept as okflify's example because it
-shows the format doing its actual job: separating **what we measured** from
-**what we assumed**.
+## Read this guide in order
 
-## Answer
+| Page | What it explains |
+|---|---|
+| [OKF foundation](concepts/okf-foundation.md) | Bundle structure, document types, links, trust tiers, verification, and freshness |
+| [OKFlify renderer](concepts/okflify-renderer.md) | CLI, discovery, graph/tree/document views, theming, portability, mobile behavior, and limits |
+| [ORF research profile](concepts/orf-research.md) | Approved research questions, plans, findings, evidence grades, and conformance gates |
+| [EMF memory profile](concepts/emf-memory.md) | Human intent, altitude, concerns, sensors, contradictions, and resolution order |
+| [Profile composition](learnings/profile-composition.md) | Why ORF and EMF extend OKF instead of forking it, and how research becomes durable memory |
+| [Compatibility proof](evidence/compatibility.md) | The concrete packs, commands, versions, and output checks used against this release |
 
-**7.2 pixels.** Labels were rendering at 7.2px effective size — a 1280px-wide
-diagram forced into a 702px column at 0.51 scale, with 14px text scaled down
-with it.
+## Install and render
 
-The CSS said `width: 100%`. That reads like *"make it fit"* and it does — by
-shrinking a diagram that was already too wide, along with every label on it.
+```sh
+python -m pip install okflify
+okflify --example --open
+okflify /path/to/okf-bundle -o /tmp/knowledge.html
+```
 
-## Concepts
+The output contains the documents and navigation data inline. There is no
+application server and no generated asset directory to keep beside the file.
+Mermaid diagrams are rendered by the browser when online; the knowledge,
+frontmatter-derived trust display, navigation, graph data, and prose are all in
+the HTML.
 
-| Read | For |
-|------|-----|
-| [fit-to-width-shrinks-text](concepts/fit-to-width-shrinks-text.md) | The mechanism, and when `width:100%` is wrong |
-| [passing-checks-missed-it](concepts/passing-checks-missed-it.md) | Why four green checks said nothing |
+## Where the three formats meet
 
-## Learnings
+**OKF is the base contract.** It says what a knowledge document is, how bundles
+are laid out, how documents link, and how trust is represented.
 
-- [measure-what-the-eye-judges](learnings/measure-what-the-eye-judges.md)
+**ORF is the research face.** It adds the question, approval, plan, research
+status, and evidence grades needed to make an investigation auditable.
 
-## Evidence
+**EMF is the memory face.** It adds attributed human intent, authority altitude,
+links to work systems, machine-sensor provenance, supersession, and explicit
+unresolved contradictions.
 
-- [measurements](evidence/measurements.md) — the browser commands and their output
+**OKFlify is the reader.** It renders all three because every ORF or EMF document
+remains a valid OKF document. Unknown profile fields are preserved in source and
+do not require a separate rendering engine.
 
-## Citations
+## The governing constraint
 
-- [Mermaid](https://mermaid.js.org) sizing behaviour
-- [OKF v0.2 trust signals](https://cloud.google.com/blog/products/data-analytics/okf-v0-2-adds-trust-signals)
+Trust is not decoration. `human:` outranks `job:`, which outranks `agent:`. A
+page verified only by an agent is labelled as such; a format about provenance
+would defeat itself if every claim looked equally authoritative.
+
+Continue with [the OKF foundation](concepts/okf-foundation.md).

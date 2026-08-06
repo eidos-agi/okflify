@@ -70,9 +70,9 @@ class TestDiscover:
 class TestBuild:
     def test_example_bundle(self, tmp_path):
         r = build(EXAMPLE, tmp_path / "out.html")
-        assert r["docs"] == 6
+        assert r["docs"] == 8
         # A drop below this means the section-hop resolver bug is back.
-        assert r["edges"] == 7
+        assert r["edges"] == 14
         assert r["out"].is_file()
 
     def test_host_home_from_docs_json(self, tmp_path):

@@ -15,16 +15,17 @@ okflify ~/path/to/bundle        # or your own
 ```
 
 ```
-okflify → bundle/okflify.html — 6 documents, 12 edges, 1 diagram
+okflify → bundle/okflify.html — 8 documents, 14 edges, 3 diagrams
 ```
 
 ---
 
-## Start with the example
+## Start with the manual
 
-`--example` renders a real, closed investigation — *why were the diagrams unreadable?* — with the measurements that answered it, the counter-cases, and a genuine spread of verification tiers.
-
-It is deliberately **not** a manual. The README explains okflify; the example shows OKF carrying real knowledge, including an agent-verified page that argues against its own author.
+`--example` renders the detailed OKFlify manual as an OKF bundle. It explains the
+OKF foundation, the renderer, ORF research packs, EMF memory packs, how the
+profiles compose, and the compatibility proof. The public Hostkey site is built
+from this same bundle: OKFlify documents itself by rendering its own source format.
 
 ## Trust is the point
 

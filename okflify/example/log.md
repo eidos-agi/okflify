@@ -1,17 +1,11 @@
-# Investigation log (append-only)
+# Guide log (append-only)
 
-| When | Who | Event | Concept / learning id |
-|------|-----|-------|------------------------|
-| 2026-07-29 | human:daniel | "poor rendering quality" — with a screenshot | — |
-| 2026-07-29 | agent:claude | Measured rather than guessed: label 7.2px effective, scale 0.51 | `evidence/measurements` |
-| 2026-07-29 | agent:claude | Cause: `width:100%` shrinks a diagram wider than its column, text with it | `fit-to-width-shrinks-text` |
-| 2026-07-29 | job:okflify-build | Fix verified: 7.2px → 14px, scale 0.51 → 1.00 | `evidence/measurements` |
-| 2026-07-29 | human:daniel | Confirmed readable on screen — the check that actually decided it | `measure-what-the-eye-judges` |
+| When | Who | Event |
+|---|---|---|
+| 2026-07-29 | job:okflify-build | The first packaged example proved OKF rendering and visual trust tiers |
+| 2026-08-06 | human:daniel | Required OKFlify itself, ORF, and EMF to be explained in great detail |
+| 2026-08-06 | agent:codex | Rebuilt the packaged example as this product and format guide from the current renderer, ORF spec, and EMF spec |
+| 2026-08-06 | job:okflify-build | Render and browser checks recorded in [compatibility proof](evidence/compatibility.md) |
 
----
-
-## Why this is the example bundle
-
-It is small, real, and every number in it was measured. Nothing here is
-illustrative or invented — which matters, because a bundle demonstrating a
-format built around verification cannot itself be fabricated.
+This file has no frontmatter by OKF convention. It is history, not a claim that
+needs to compete in the trust ladder.
