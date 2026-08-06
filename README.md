@@ -2,7 +2,9 @@
 
 **Converts OKF bundles into HTML.** One command, one self-contained file — no server, no build pipeline, no dependencies.
 
-[**See it live →**](https://eidos-agi.github.io/okflify/) · rebuilt from source by CI on every push, so the demo can never drift from the renderer.
+ORF (research) and EMF (memory) are additive OKF profiles. The same command renders them and labels their profile versions in the header.
+
+[**See it live →**](https://okflify.eidosagi.com/) · served from Eidos Hostkey and rebuilt from the same source CI verifies on every push.
 
 <img src="https://raw.githubusercontent.com/eidos-agi/okflify/master/assets/doc-dark.png" alt="A rendered OKF document with its verification tier shown above the content" width="100%"/>
 
@@ -115,13 +117,16 @@ verified:
   "fonts": { "family": "Inter" },
   "appearance": { "default": "system" },
   "background": { "decoration": "gradient" },
-  "home": { "href": "/boxes/", "label": "Boxes" }
+  "home": { "href": "/boxes/", "label": "Boxes" },
+  "github": false
 }
 ```
 
 Any Google Font name loads automatically. `background.decoration`: `gradient`, `grid`, `none`.
 
 **`home`** — optional return link to the **host app** (not the pack index). The pack logo still jumps to the first document; the host control is a separate **← label** in the header. When the HTML is opened full-page inside a product (e.g. Greenmark Boxes), set `home.href` to that product’s root. Runtime override: `?return=/path` or `?home=/path` (same-origin only), optional `returnLabel`.
+
+**`github`** — header GitHub button. `false` / omit-with-`home` hides it (hosted packs must not advertise the okflify tool repo). Explicit URL or `{ "href", "label?", "title?" }` for the pack’s own repo. Standalone packs (no `home`) still default to eidos-agi/okflify.
 
 ## Notes from building it
 
@@ -144,7 +149,7 @@ Stated because overselling would contradict the whole premise:
 
 ```sh
 pip install -e ".[dev]"
-python -m pytest -q          # 14 tests
+python -m pytest -q          # 19 tests
 okflify --example --open
 ```
 

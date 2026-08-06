@@ -22,7 +22,7 @@ What it renders:
 Theming is Mintlify-shaped and lives in docs.json — colours, fonts, background
 decoration, eyebrows. Never edit template.html to restyle.
 
-Generic: point it at any OKF v0.2 bundle.
+Generic: point it at any OKF v0.2 bundle, including additive ORF and EMF profiles.
 """
 import html
 import json
@@ -269,6 +269,60 @@ def host_home_html(cfg):
     )
 
 
+_GH_ICON = (
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">'
+    '<path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34'
+    "-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 "
+    "2.94.83.09-.65.35-1.09.63-1.34-2.22-.25-4.555-1.11-4.555-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25"
+    "-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 "
+    "1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74"
+    'c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>'
+)
+
+
+def github_link_html(cfg):
+    """Header GitHub control — must not hard-promote okflify when hosted in another product.
+
+    docs.json:
+      "github": false                          # hide
+      "github": "https://github.com/org/repo"  # custom URL
+      "github": { "href": "...", "label": "GitHub", "title": "…" }
+
+    Default: standalone packs (no ``home``) still link to eidos-agi/okflify.
+    Hosted packs (``home`` set) omit GitHub unless ``github`` is set explicitly.
+    """
+    has_home = bool(cfg.get("home") or cfg.get("return"))
+    raw = cfg.get("github", "__default__")
+
+    if raw is False or raw is None or raw == "":
+        return ""
+
+    if raw == "__default__" or raw is True:
+        if has_home:
+            return ""  # embedded in a host app — no tool self-promo
+        href = "https://github.com/eidos-agi/okflify"
+        title = "okflify — converts OKF bundles into HTML"
+        label = "GitHub"
+    elif isinstance(raw, str):
+        href, title, label = raw.strip(), "GitHub", "GitHub"
+        if not href:
+            return ""
+    elif isinstance(raw, dict):
+        href = (raw.get("href") or raw.get("url") or "").strip()
+        if not href:
+            return ""
+        label = (raw.get("label") or "GitHub").strip() or "GitHub"
+        title = (raw.get("title") or label).strip() or label
+    else:
+        return ""
+
+    return (
+        f'<a class="ib" href="{html.escape(href)}" target="_blank" rel="noopener" '
+        f'title="{html.escape(title)}" style="text-decoration:none;gap:.4rem">'
+        f"{_GH_ICON}{html.escape(label)}</a>"
+    )
+
+
 def theme_tokens(cfg, root_fm):
     """Mintlify-shaped docs.json → template substitutions."""
     col, fon = cfg.get("colors", {}), cfg.get("fonts", {})
@@ -291,7 +345,13 @@ def theme_tokens(cfg, root_fm):
         "__EYEBROW__": cfg.get("styling", {}).get("eyebrows", "breadcrumbs"),
         "__DEFAULTMODE__": cfg.get("appearance", {}).get("default", "system"),
         "__BRANDNAME__": cfg.get("name", str(root_fm.get("title") or "")),
+        "__FORMAT__": " · ".join(
+            f"{name.upper()} v{root_fm[key]}"
+            for name, key in (("okf", "okf_version"), ("orf", "orf_version"), ("emf", "emf_version"))
+            if root_fm.get(key)
+        ) or "OKF v0.2",
         "__HOST_HOME__": host_home_html(cfg),
+        "__GITHUB_LINK__": github_link_html(cfg),
     }
 
 
@@ -337,7 +397,6 @@ def build(bundle="." , out=None, template=None):
 
     html_out = (tpl_path.read_text()
         .replace("__TITLE__", html.escape(str(root_fm.get("title") or bundle.resolve().name)))
-        .replace("__OKFV__", str(root_fm.get("okf_version") or "0.2"))
         .replace("__STATUS__", str(root_fm.get("status") or "—"))
         .replace("__DOCS__", json.dumps(docs))
         .replace("__EDGES__", json.dumps(edges)))

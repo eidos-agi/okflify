@@ -59,6 +59,7 @@ header{position:sticky;top:0;z-index:40;height:60px;flex:none;display:flex;align
 .ib{height:34px;padding:0 .7rem;display:inline-flex;align-items:center;gap:.35rem;font:500 .8rem/1 var(--fb);
  border:1px solid var(--line);background:var(--raise);color:var(--ink2);border-radius:9px;cursor:pointer;transition:.15s}
 .ib:hover{border-color:var(--acc);color:var(--acc)}
+#navtoggle{display:none}
 /* Host app return — set via docs.json home or ?return= / ?home= */
 a.host-home{height:34px;padding:0 .75rem;display:inline-flex;align-items:center;gap:.4rem;
  font:550 .8rem/1 var(--fb);color:var(--ink);text-decoration:none;border:1px solid var(--line);
@@ -317,25 +318,39 @@ a.tleaf .tk{font:500 .66rem/1 ui-monospace,monospace;color:var(--faint);flex:non
 }
 @media (max-width:1180px){.rail{display:none}.cols{padding:2.4rem}}
 @media (max-width:900px){
- .shell{display:block}aside{width:auto;height:auto;position:static;border-bottom:1px solid var(--line);padding:1.2rem 1.4rem}
- main{height:auto}.cols{padding:1.6rem 1.4rem 5rem}.srch{width:170px}
+ #navtoggle{display:inline-flex}
+ aside{position:fixed;z-index:35;inset:60px auto 0 0;width:min(320px,86vw);height:auto;padding:1.2rem 1.4rem;
+  background:var(--bg);border-right:1px solid var(--line);box-shadow:18px 0 48px -28px rgba(0,0,0,.45);
+  transform:translateX(-100%);transition:transform .18s ease}
+ aside.open{transform:none}
+ main{width:100%;height:calc(100dvh - 60px)}.cols{padding:1.6rem 1.4rem 5rem}.srch{width:170px}
+}
+@media (max-width:700px){
+ header{gap:.5rem;padding:0 .75rem}
+ header .logo{min-width:0;overflow:hidden;text-overflow:ellipsis}
+ header .ver,header .srch,header a.ib,header button[onclick="print()"]{display:none}
+ header .grow{min-width:0}
+ .cols{padding:1.5rem 1rem 5rem}
+ .titlerow{display:block}.titlerow .pgacts{margin-top:.9rem}
+ h1{font-size:2rem}
+ main footer{padding:1.4rem 1rem 2rem!important}
 }
 </style></head><body>
 
 <header>
   __HOST_HOME__
   <a class="logo" href="#" id="home" title="Back to the index of this pack"><span class="mark">A</span>__BRANDNAME__</a>
-  <span class="ver">OKF v__OKFV__</span>
+  <span class="ver">__FORMAT__</span>
   <div class="grow"></div>
+  <button class="ib" id="navtoggle" title="Open navigation" aria-label="Open navigation" aria-controls="nav" aria-expanded="false">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
   <div class="srch">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
     <input id="q" type="search" placeholder="Search documentation…" autocomplete="off">
   </div>
   <button class="ib" id="th" title="Toggle theme">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9c-4.97 0-9-4.03-9-9Z"/></svg></button>
-  <a class="ib" href="https://github.com/eidos-agi/okflify" target="_blank" rel="noopener"
-     title="okflify — converts OKF bundles into HTML" style="text-decoration:none;gap:.4rem">
-     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.94.83.09-.65.35-1.09.63-1.34-2.22-.25-4.555-1.11-4.555-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>GitHub</a>
+  __GITHUB_LINK__
   <button class="ib" onclick="print()">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M8 14h8v7H8z"/></svg>Print</button>
 </header>
@@ -397,6 +412,12 @@ function setT(t){document.documentElement.dataset.t=t;localStorage.okfT=t;
  paint();if(location.hash.slice(1)==="graph")G();}
 document.getElementById("th").onclick=()=>setT(document.documentElement.dataset.t==="dark"?"light":"dark");
 document.documentElement.dataset.decor="__DECOR__";
+
+const NAV=document.getElementById("nav"),NAVTOGGLE=document.getElementById("navtoggle");
+function mobileNav(open){NAV.classList.toggle("open",open);NAVTOGGLE.setAttribute("aria-expanded",String(open));
+ NAVTOGGLE.setAttribute("aria-label",open?"Close navigation":"Open navigation");NAVTOGGLE.title=open?"Close navigation":"Open navigation"}
+NAVTOGGLE.onclick=()=>mobileNav(!NAV.classList.contains("open"));
+addEventListener("keydown",e=>{if(e.key==="Escape")mobileNav(false)});
 
 /* nav */
 const G0=[];DOCS.forEach(d=>{let g=G0.find(x=>x.n===d.group);if(!g){g={n:d.group,i:[]};G0.push(g)}g.i.push(d)});
@@ -606,7 +627,7 @@ document.addEventListener("click",e=>{
  const t=e.target.closest("[data-toc]");
  if(t){e.preventDefault();document.getElementById(t.getAttribute("href").slice(1))?.scrollIntoView();
    document.querySelectorAll("[data-toc]").forEach(a=>a.classList.remove("here"));t.classList.add("here");return}
- const a=e.target.closest("[data-nav]");if(a){e.preventDefault();location.hash=a.dataset.nav}});
+ const a=e.target.closest("[data-nav]");if(a){e.preventDefault();location.hash=a.dataset.nav;mobileNav(false)}});
 document.getElementById("home").addEventListener("click",e=>{e.preventDefault();location.hash=DOCS[0].slug});
 /* Host app return: docs.json home {href,label}, or ?return= / ?home= (same-origin). */
 (function(){

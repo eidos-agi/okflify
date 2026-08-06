@@ -92,6 +92,33 @@ class TestBuild:
         assert 'href="/app/"' in html_out
         assert "App" in html_out
         assert "←" in html_out
+        # Hosted pack: no hard-coded okflify GitHub promo
+        assert "github.com/eidos-agi/okflify" not in html_out
+
+    def test_github_false_hides_link(self, tmp_path):
+        b = tmp_path / "bundle"
+        b.mkdir()
+        (b / "index.md").write_text(
+            '---\nokf_version: "0.2"\ntype: claim\ntitle: "T"\n---\n\nbody\n'
+        )
+        (b / "docs.json").write_text('{"name":"Demo","github":false}')
+        out = tmp_path / "out.html"
+        build(b, out)
+        assert "github.com" not in out.read_text()
+
+    def test_github_custom_repo(self, tmp_path):
+        b = tmp_path / "bundle"
+        b.mkdir()
+        (b / "index.md").write_text(
+            '---\nokf_version: "0.2"\ntype: claim\ntitle: "T"\n---\n\nbody\n'
+        )
+        (b / "docs.json").write_text(
+            '{"name":"Demo","github":{"href":"https://github.com/org/product","label":"Source"}}'
+        )
+        html_out = build(b, tmp_path / "out.html")["out"].read_text()
+        assert "github.com/org/product" in html_out
+        assert "Source" in html_out
+        assert "github.com/eidos-agi/okflify" not in html_out
 
     def test_output_is_self_contained(self, tmp_path):
         out = tmp_path / "out.html"
@@ -101,6 +128,25 @@ class TestBuild:
         assert "__DOCS__" not in html and "__PRIMARY__" not in html   # all placeholders filled
         assert 'id="treehost"' in html and 'data-nav="tree"' in html  # tree view present
         assert "human:daniel" in html  # trust tiers rendered                                  # trust tiers rendered
+
+    def test_mobile_navigation_is_a_drawer(self, tmp_path):
+        html = build(EXAMPLE, tmp_path / "out.html")["out"].read_text()
+        assert 'id="navtoggle"' in html
+        assert 'aria-controls="nav"' in html
+        assert "aside.open{transform:none}" in html
+        assert "mobileNav(false)" in html
+
+    def test_orf_and_emf_profiles_render(self, tmp_path):
+        for name, version in (("orf", "0.2.0"), ("emf", "0.1")):
+            bundle = tmp_path / name
+            bundle.mkdir()
+            (bundle / "index.md").write_text(
+                f'---\nokf_version: "0.2"\n{name}_version: "{version}"\n'
+                f'type: claim\ntitle: "{name.upper()} example"\n---\n\nbody\n'
+            )
+            rendered = build(bundle, tmp_path / f"{name}.html")["out"].read_text()
+            assert "OKF v0.2" in rendered
+            assert f"{name.upper()} v{version}" in rendered
 
     def test_empty_directory_fails_loudly(self, tmp_path):
         try:

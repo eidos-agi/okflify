@@ -1,4 +1,4 @@
-"""okflify CLI — converts OKF bundles into HTML."""
+"""okflify CLI — converts OKF bundles and additive profiles into HTML."""
 import argparse, pathlib, sys
 from . import __version__
 from .build import build
@@ -7,7 +7,7 @@ from .build import build
 def main(argv=None):
     ap = argparse.ArgumentParser(
         prog="okflify",
-        description="Convert an Open Knowledge Format v0.2 bundle into one self-contained HTML file.",
+        description="Convert an OKF v0.2 bundle (including ORF and EMF profiles) into one self-contained HTML file.",
         epilog="OKF is a graph, not a tree: directories are storage, the structure is the links.",
     )
     ap.add_argument("bundle", nargs="?", default=".", help="bundle directory (default: .)")
