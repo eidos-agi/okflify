@@ -8,7 +8,7 @@ sources:
 verified:
   by: agent:codex
   at: 2026-08-06
-  method: "checked against eidos-squiddie/orf/SPEC.md v0.2.0 and its validator examples"
+  method: "checked against eidos-agi/orf SPEC.md v0.2.0 and its validator examples"
   stale_after: 2026-11-06
 ---
 
