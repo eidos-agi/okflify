@@ -29,8 +29,35 @@ import json
 import pathlib
 import re
 import sys
+from datetime import datetime, timezone
 
 HERE = pathlib.Path(__file__).parent
+LOG_EVENT_RE = re.compile(
+    r"^\s*[-*]\s+(\d{4}-\d{2}-\d{2}(?:T\S+)?)\s+[—–-]\s+(.+)$", re.MULTILINE
+)
+
+
+def timestamp_key(value: str) -> float:
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return float("-inf")
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.timestamp()
+
+
+def render_log(body: str) -> str:
+    """Render dated bullet entries newest first; later appends win timestamp ties."""
+    lines = body.splitlines()
+    positions = [i for i, line in enumerate(lines) if LOG_EVENT_RE.match(line)]
+    ordered = sorted(
+        ((timestamp_key(LOG_EVENT_RE.match(lines[i]).group(1)), i, lines[i]) for i in positions),
+        reverse=True,
+    )
+    for position, (_, _, line) in zip(positions, ordered):
+        lines[position] = line
+    return md("\n".join(lines))
 
 # ── markdown ────────────────────────────────────────────────────────────────
 
@@ -176,13 +203,13 @@ def discover(root: pathlib.Path):
     each with an index.md). A single bundle is its own catalogue of one. OKF says
     nothing about this layer — it is purely how people file bundles on disk.
     """
-    if (root / "index.md").is_file():
+    if (root / "product.json").is_file() or (root / "index.md").is_file():
         return [root]
     for parent in (root / "bundles", root):
         if not parent.is_dir():
             continue
         found = sorted(d for d in parent.iterdir()
-                       if d.is_dir() and (d / "index.md").is_file())
+                       if d.is_dir() and ((d / "product.json").is_file() or (d / "index.md").is_file()))
         if found:
             return found
     return []
@@ -201,6 +228,30 @@ def collect(bundle: pathlib.Path, label: str | None = None):
         # a generic "# Investigation" — so drop it and render the real title.
         if fm.get("title"):
             body = re.sub(r"\A\s*#\s+[^\n]*\n+", "", body, count=1)
+        temporal = {
+            key: fm[key]
+            for key in ("created_at", "updated_at", "accepted_at", "accepted_by")
+            if fm.get(key) and fm[key] != "unknown"
+        }
+        activity = [
+            {
+                "at": temporal[key],
+                "kind": key.removesuffix("_at"),
+                **({"actor": temporal.get("accepted_by")} if key == "accepted_at" else {}),
+            }
+            for key in ("created_at", "updated_at", "accepted_at")
+            if temporal.get(key)
+        ]
+        if path.name == "log.md":
+            activity += [
+                {
+                    "at": match.group(1),
+                    "kind": "log",
+                    "detail": match.group(2),
+                    "links": re.findall(r'data-nav="([^"]+)"', md(match.group(2))),
+                }
+                for match in LOG_EVENT_RE.finditer(body)
+            ]
         docs.append(dict(
             slug=(f"{label}/{path.stem}" if label else path.stem),
             bundle=label or "",
@@ -210,7 +261,8 @@ def collect(bundle: pathlib.Path, label: str | None = None):
             file=str(path.relative_to(bundle)),
             title=fm.get("title") or path.stem, type=fm.get("type", "—"),
             status=fm.get("status", ""), tags=fm.get("tags", ""),
-            verified=fm.get("verified") or {}, html=md(body), src=body,
+            verified=fm.get("verified") or {}, temporal=temporal, activity=activity,
+            html=render_log(body) if path.name == "log.md" else md(body), src=body,
         ))
 
     add(bundle / "index.md", "Bundle")
@@ -224,6 +276,56 @@ def collect(bundle: pathlib.Path, label: str | None = None):
     return docs
 
 
+TYPE_GROUP = {
+    "product": "Product", "area": "Product", "intent": "Intent", "user": "Intent",
+    "problem": "Intent", "promise": "Intent", "outcome": "Intent",
+    "journey": "Experience", "moment": "Experience", "surface": "Experience",
+    "state": "Experience", "interaction": "Experience", "decision": "Governance",
+    "authority": "Governance", "work": "Delivery", "evidence": "Assurance",
+    "proof": "Assurance", "gap": "Gaps",
+}
+
+
+def collect_model(bundle: pathlib.Path, label: str | None = None):
+    """Project one canonical OPF v1 graph into renderer documents."""
+    model = json.loads((bundle / "product.json").read_text())
+    entities = {entity["id"]: entity for entity in model["entities"]}
+    docs = []
+    for entity in model["entities"]:
+        content = entity.get("content")
+        body = entity.get("description", "")
+        if content:
+            metadata, projection = frontmatter((bundle / content).read_text())
+            # OPF v1 is canonical. Old packet prose is a storage projection,
+            # not entity content, and must never leak into canonical views.
+            if not str(metadata.get("opf_version", "")).startswith("0."):
+                body = projection
+        body = re.sub(r"\A\s*#\s+[^\n]*\n+", "", body, count=1)
+        provenance = entity.get("provenance") or {}
+        docs.append(dict(
+            slug=entity["id"], bundle=label or "", group=(label or TYPE_GROUP[entity["type"]]),
+            section=TYPE_GROUP[entity["type"]], file=content or "product.json",
+            title=entity["title"], type=entity["type"], status=entity["status"], tags="",
+            verified={"by": provenance.get("by", ""), "method": provenance.get("method", "")},
+            temporal={}, activity=[], html=md(body), src=body, entity=entity,
+        ))
+    root_doc = next(doc for doc in docs if doc["slug"] == model["product"])
+    for order, event in enumerate(model["events"]):
+        root_doc["activity"].append({
+            "at": event["at"], "kind": event["type"], "detail": event["detail"],
+            "actor": event.get("actor"), "refs": event.get("subjects", []),
+            "unresolved": [] if event.get("subjects") else ["no canonical subject"],
+            "order": order,
+        })
+    edges = [
+        {"s": relationship["from"], "t": relationship["to"], "type": relationship["type"],
+         **({"order": relationship["order"]} if "order" in relationship else {})}
+        for relationship in model["relationships"]
+    ]
+    link_docs(docs, edges)
+    return docs, edges, model
+
+
 def link_graph(docs):
     """
     OKF is a GRAPH, not a tree. The edges are whatever the documents actually
@@ -232,14 +334,62 @@ def link_graph(docs):
     slugs = {d["slug"] for d in docs}
     edges, seen = [], set()
     for d in docs:
+        if d["file"] == "log.md":
+            continue  # activity references are temporal, not semantic graph edges
         for tgt in re.findall(r'data-nav="([^"]+)"', d["html"]):
             if tgt in slugs and tgt != d["slug"] and (d["slug"], tgt) not in seen:
                 seen.add((d["slug"], tgt))
                 edges.append({"s": d["slug"], "t": tgt})
+    link_docs(docs, edges)
+    return edges
+
+
+def link_docs(docs, edges):
     for d in docs:
         d["out"] = sorted({e["t"] for e in edges if e["s"] == d["slug"]})
         d["in"] = sorted({e["s"] for e in edges if e["t"] == d["slug"]})
-    return edges
+
+
+def resolve_activity(docs):
+    """Resolve explicit log links after catalogue slugs are final."""
+    slugs = {d["slug"] for d in docs}
+    order = 0
+    for doc in docs:
+        for event in doc["activity"]:
+            links = event.pop("links", [])
+            event["refs"] = [slug for slug in links if slug in slugs]
+            event["unresolved"] = [slug for slug in links if slug not in slugs]
+            event["order"] = order
+            order += 1
+        if doc["file"] == "log.md":
+            for event in doc["activity"]:
+                for slug in event["unresolved"]:
+                    doc["html"] = re.sub(
+                        rf'<a href="#{re.escape(slug)}" data-nav="{re.escape(slug)}">(.*?)</a>',
+                        r'<span class="unresolved-link">\1</span>',
+                        doc["html"],
+                    )
+            cursor = 0
+            for event in sorted(
+                doc["activity"],
+                key=lambda item: (timestamp_key(item["at"]), item["order"]),
+                reverse=True,
+            ):
+                end = doc["html"].find("</li>", cursor)
+                if end == -1:
+                    break
+                if event["refs"]:
+                    marker = ""
+                elif event["unresolved"]:
+                    marker = (
+                        '<span class="missingref">Unresolved concept reference: '
+                        + html.escape(", ".join(event["unresolved"]))
+                        + "</span>"
+                    )
+                else:
+                    marker = '<span class="missingref">No concept reference recorded</span>'
+                doc["html"] = doc["html"][:end] + marker + doc["html"][end:]
+                cursor = end + len(marker) + len("</li>")
 
 
 def host_home_html(cfg):
@@ -347,7 +497,7 @@ def theme_tokens(cfg, root_fm):
         "__BRANDNAME__": cfg.get("name", str(root_fm.get("title") or "")),
         "__FORMAT__": " · ".join(
             f"{name.upper()} v{root_fm[key]}"
-            for name, key in (("okf", "okf_version"), ("orf", "orf_version"), ("emf", "emf_version"))
+            for name, key in (("opf", "opf_version"), ("okf", "okf_version"), ("orf", "orf_version"), ("emf", "emf_version"))
             if root_fm.get(key)
         ) or "OKF v0.2",
         "__HOST_HOME__": host_home_html(cfg),
@@ -365,26 +515,46 @@ def build(bundle="." , out=None, template=None):
     found = discover(bundle)
     multi = len(found) > 1
     docs = []
+    edges = []
+    models = []
     for b in found:
         label = b.name if multi else None
+        if (b / "product.json").is_file():
+            got, model_edges, model = collect_model(b, label)
+            edges += model_edges
+            models.append(model)
+            docs += got
+            continue
         got = collect(b, label)
         if multi:
             # resolve the same-bundle placeholder now that the label is known
             for d in got:
                 d["html"] = d["html"].replace("{BUNDLE}", label)
+                for event in d["activity"]:
+                    event["links"] = [link.replace("{BUNDLE}", label) for link in event.get("links", [])]
         else:
             for d in got:
                 d["html"] = d["html"].replace("{BUNDLE}/", "")
+                for event in d["activity"]:
+                    event["links"] = [link.replace("{BUNDLE}/", "") for link in event.get("links", [])]
         docs += got
     if not docs:
         raise SystemExit(
             f"okflify: no OKF documents under {bundle}\n"
-            "  expected index.md / log.md / concepts/ / evidence/ / learnings/"
+            "  expected OPF product.json or an OKF index.md bundle"
         )
-    edges = link_graph(docs)
+    resolve_activity([doc for doc in docs if "entity" not in doc])
+    if not models:
+        edges = link_graph(docs)
+    elif len(models) != len(found):
+        edges += link_graph([doc for doc in docs if "entity" not in doc])
 
     idx = (found[0] / "index.md") if found else (bundle / "index.md")
-    root_fm, _ = frontmatter(idx.read_text()) if idx.exists() else ({}, "")
+    if models:
+        product = next(entity for entity in models[0]["entities"] if entity["id"] == models[0]["product"])
+        root_fm = {"title": product["title"], "status": product["status"], "opf_version": models[0]["version"]}
+    else:
+        root_fm, _ = frontmatter(idx.read_text()) if idx.exists() else ({}, "")
     cfg_path = bundle / "docs.json"
     if not cfg_path.exists() and found:
         cfg_path = found[0] / "docs.json"
@@ -399,7 +569,8 @@ def build(bundle="." , out=None, template=None):
         .replace("__TITLE__", html.escape(str(root_fm.get("title") or bundle.resolve().name)))
         .replace("__STATUS__", str(root_fm.get("status") or "—"))
         .replace("__DOCS__", json.dumps(docs))
-        .replace("__EDGES__", json.dumps(edges)))
+        .replace("__EDGES__", json.dumps(edges))
+        .replace("__MODELS__", json.dumps(models)))
     for k, v in theme_tokens(cfg, root_fm).items():
         html_out = html_out.replace(k, str(v))
 

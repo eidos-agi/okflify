@@ -4,10 +4,10 @@ Regression tests for okflify.
 Every case here is a bug that actually shipped or nearly shipped — shipr's
 release model named `pytest` as a proof command and nothing existed to run.
 """
-import pathlib, sys
+import json, pathlib, sys
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
-from okflify.build import frontmatter, inl, discover, build
+from okflify.build import frontmatter, inl, discover, collect, build
 
 ROOT = pathlib.Path(__file__).parent.parent
 EXAMPLE = ROOT / "okflify" / "example"
@@ -72,8 +72,38 @@ class TestBuild:
         r = build(EXAMPLE, tmp_path / "out.html")
         assert r["docs"] == 8
         # A drop below this means the section-hop resolver bug is back.
-        assert r["edges"] == 14
+        assert r["edges"] == 13  # log activity links do not alter the semantic graph
         assert r["out"].is_file()
+
+    def test_temporal_metadata_and_log_become_activity(self, tmp_path):
+        b = tmp_path / "bundle"
+        b.mkdir()
+        (b / "index.md").write_text(
+            '---\ntitle: "Product"\ncreated_at: 2026-08-07T10:00:00Z\n'
+            'updated_at: 2026-08-07T11:00:00Z\n---\n\nbody\n'
+        )
+        (b / "log.md").write_text(
+            "# Log\n\n"
+            "- 2026-08-06 — Updated [Product](index.md).\n"
+            "- 2026-08-07 — Historic prose without a concept reference.\n"
+            "- 2026-08-08 — Missing [concept](concepts/missing.md).\n"
+            "- 2026-08-08 — Later append at the same timestamp.\n"
+        )
+        out = tmp_path / "out.html"
+        build(b, out)
+        docs_json = out.read_text().split("const DOCS=", 1)[1].split(",EDGES=", 1)[0]
+        docs = json.loads(docs_json)
+        assert [event["kind"] for event in docs[0]["activity"]] == ["created", "updated"]
+        events = docs[1]["activity"]
+        assert events[0]["refs"] == ["index"] and events[0]["unresolved"] == []
+        assert events[1]["refs"] == [] and events[1]["unresolved"] == []
+        assert events[2]["refs"] == [] and events[2]["unresolved"] == ["missing"]
+        assert events[3]["order"] > events[2]["order"]
+        rendered_log = docs[1]["html"]
+        assert rendered_log.index("Later append") < rendered_log.index("Missing")
+        assert rendered_log.index("Missing") < rendered_log.index("Historic prose")
+        edges_json = out.read_text().split(",EDGES=", 1)[1].split(",MODELS=", 1)[0]
+        assert all(edge["s"] != "log" for edge in json.loads(edges_json))
 
     def test_host_home_from_docs_json(self, tmp_path):
         # Host app return is optional; when set, header must leave the pack.
@@ -125,9 +155,41 @@ class TestBuild:
         build(EXAMPLE, out)
         html = out.read_text()
         assert html.startswith("<!doctype html>")
-        assert "__DOCS__" not in html and "__PRIMARY__" not in html   # all placeholders filled
+        assert "__DOCS__" not in html and "__PRIMARY__" not in html and "__MODELS__" not in html
         assert 'id="treehost"' in html and 'data-nav="tree"' in html  # tree view present
+        assert 'id="timelinehost"' in html and 'id="calendarhost"' in html
+        assert all(f'data-calview="{view}"' in html for view in ("day", "week", "month", "year"))
         assert "human:daniel" in html  # trust tiers rendered                                  # trust tiers rendered
+
+    def test_opf_v1_model_renders_canonical_views(self, tmp_path):
+        bundle = tmp_path / "v1"
+        bundle.mkdir()
+        (bundle / "legacy.md").write_text(
+            '---\nopf_version: "0.2.6"\nverified: stale\n---\n\nLegacy promise prose.\n'
+        )
+        model = {
+            "format": "opf", "version": "1.0", "product": "opf:test:product",
+            "entities": [
+                {"id":"opf:test:product","type":"product","title":"Test","status":"active","provenance":{"by":"human:test","method":"test"}},
+                {"id":"opf:test:area","type":"area","title":"Intent","status":"active","provenance":{"by":"human:test","method":"test"}},
+                {"id":"opf:test:intent","type":"intent","title":"Intent entity","status":"active","description":"Canonical intent.","content":"legacy.md","provenance":{"by":"human:test","method":"test"}},
+            ],
+            "relationships": [
+                {"id":"opf:test:rel:1","type":"contains","from":"opf:test:product","to":"opf:test:area","order":0},
+                {"id":"opf:test:rel:2","type":"contains","from":"opf:test:area","to":"opf:test:intent","order":0},
+                {"id":"opf:test:rel:3","type":"expresses","from":"opf:test:product","to":"opf:test:intent"},
+            ],
+            "events": [{"id":"opf:test:event:1","type":"created","at":"2026-08-08T00:00:00Z","subjects":["opf:test:product","opf:test:area","opf:test:intent"],"detail":"Created graph"}],
+        }
+        (bundle / "product.json").write_text(json.dumps(model))
+        result = build(bundle, tmp_path / "v1.html")
+        rendered = result["out"].read_text()
+        assert result["docs"] == 3 and result["edges"] == 3
+        assert 'id="hierarchyhost"' in rendered and 'id="journeyhost"' in rendered
+        assert 'id="governancehost"' in rendered and 'id="assurancehost"' in rendered
+        assert 'id="gapshost"' in rendered and "OPF v1.0" in rendered
+        assert "Canonical intent." in rendered
+        assert "Legacy promise prose." not in rendered and "0.2.6" not in rendered
 
     def test_mobile_navigation_is_a_drawer(self, tmp_path):
         html = build(EXAMPLE, tmp_path / "out.html")["out"].read_text()

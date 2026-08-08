@@ -275,6 +275,39 @@ a.tleaf .tt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-spac
 a.tleaf .tk{font:500 .66rem/1 ui-monospace,monospace;color:var(--faint);flex:none}
 .tbar{display:flex;gap:.5rem;margin:1rem 0}
 
+/* ── temporal views ────────────────────────────────────────── */
+.timeline{margin:1.5rem 0;border-left:1px solid var(--line);padding-left:1.2rem}
+.te{position:relative;padding:0 0 1.25rem .65rem}
+.te::before{content:"";position:absolute;left:-1.48rem;top:.35rem;width:8px;height:8px;border-radius:50%;background:var(--acc)}
+.te time{font:600 .72rem/1.4 ui-monospace,monospace;color:var(--faint)}
+.te a{display:block;margin:.2rem 0 0;color:var(--ink);font-weight:560;text-decoration:none;border:0}
+.te p{margin:.2rem 0 0;color:var(--mut);font-size:.82rem}
+.erefs{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.35rem}.eref{font-size:.7rem!important;color:var(--acc)!important}
+.missingref{display:block;margin-top:.35rem;color:var(--faint);font-size:.7rem;font-style:italic}
+.calnav{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin:1.2rem 0}
+.calnav .views{display:flex;margin-left:auto}.calnav .views button{border-radius:0}.calnav .views button:first-child{border-radius:8px 0 0 8px}
+.calnav .views button:last-child{border-radius:0 8px 8px 0}.calnav button.on{color:var(--acc);border-color:var(--acc);background:var(--accbg)}
+#calheading{min-width:14rem;text-align:center;font:600 1rem/1 var(--fh);color:var(--ink)}
+.calpanel{border:1px solid var(--line);border-radius:var(--r);padding:1rem;background:var(--raise);margin:1rem 0}
+.calgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+.dow{font:600 .65rem/1 ui-monospace,monospace;color:var(--faint);text-align:center;padding:.35rem 0}
+.day{min-height:76px;border:1px solid var(--line2);padding:.35rem;overflow:hidden}
+.day.empty{border-color:transparent}.dn{font:.68rem/1 ui-monospace,monospace;color:var(--faint)}
+.ce{display:block;margin-top:.28rem;padding:.18rem .25rem;border:0;border-radius:4px;background:var(--accbg);
+ color:var(--acc);font-size:.66rem;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eventlist{display:grid;gap:.55rem}.eventrow{padding:.65rem .75rem;border:1px solid var(--line2);border-radius:8px}
+.eventrow time{font:.68rem/1 ui-monospace,monospace;color:var(--faint)}.eventrow p{margin:.2rem 0 0;font-size:.82rem}
+.weekgrid{display:grid;grid-template-columns:repeat(7,minmax(110px,1fr));gap:3px;overflow-x:auto}
+.weekgrid .day{min-height:180px}.yeargrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem}
+.yearmonth{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:.8rem;text-align:left;cursor:pointer}
+.yearmonth strong,.yearmonth span{display:block}.yearmonth span{margin-top:.3rem;color:var(--faint);font-size:.72rem}
+.vstack{display:grid;gap:.75rem;margin:1.2rem 0}.vcard{border:1px solid var(--line);border-radius:var(--r);background:var(--raise);padding:.9rem 1rem}
+.vcard h2,.vcard h3{margin:.1rem 0 .45rem}.vmeta{font:.7rem/1.5 ui-monospace,monospace;color:var(--faint)}
+.vlinks{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.55rem}.vlinks a{font-size:.72rem;border:1px solid var(--line);border-radius:999px;padding:.2rem .5rem}
+.hbranch{border-left:1px solid var(--line);padding-left:1rem;margin:.45rem 0}.hitem{display:flex;gap:.5rem;align-items:baseline;padding:.3rem 0}.hitem small{color:var(--faint)}
+.flow{display:flex;gap:.65rem;align-items:stretch;overflow-x:auto;padding:.5rem 0 1rem}.flow .vcard{min-width:220px}.arrow{align-self:center;color:var(--faint)}
+@media(max-width:700px){.day{min-height:52px;padding:.2rem}.ce{font-size:0;width:7px;height:7px;border-radius:50%;padding:0}.calpanel{padding:.65rem}.calnav .views{order:2;width:100%;margin-left:0}.calnav .views button{flex:1}.yeargrid{grid-template-columns:repeat(2,1fr)}}
+
 /* ── lightbox: Adobe-style diagram surfing ─────────────────── */
 .mermaid,figure img,.body img{cursor:zoom-in}
 #lb{position:fixed;inset:0;z-index:200;display:none;background:color-mix(in srgb,var(--bg) 93%,#000);
@@ -367,8 +400,9 @@ a.tleaf .tk{font:500 .66rem/1 ui-monospace,monospace;color:var(--faint);flex:non
 </div>
 
 <script>
-const DOCS=__DOCS__,EDGES=__EDGES__,EYEBROW="__EYEBROW__";
+const DOCS=__DOCS__,EDGES=__EDGES__,MODELS=__MODELS__,EYEBROW="__EYEBROW__";
 const B=Object.fromEntries(DOCS.map(d=>[d.slug,d]));
+const MODEL=MODELS[0]||null,ENTS=MODEL?Object.fromEntries(MODEL.entities.map(e=>[e.id,e])):{},RELS=MODEL?MODEL.relationships:[];
 // A catalogue has >1 bundle. With one, the tree duplicates the sidebar exactly.
 const MULTI=new Set(DOCS.map(d=>d.bundle||"")).size>1;
 const tier=v=>(v||"").startsWith("human:")?"human":(v||"").startsWith("job:")?"job":"agent";
@@ -422,7 +456,7 @@ addEventListener("keydown",e=>{if(e.key==="Escape")mobileNav(false)});
 /* nav */
 const G0=[];DOCS.forEach(d=>{let g=G0.find(x=>x.n===d.group);if(!g){g={n:d.group,i:[]};G0.push(g)}g.i.push(d)});
 function nav(f=""){const q=f.toLowerCase();
- let h=`<div class="sec">${svg(GI.Overview,15)}Overview</div><a class="n" href="#graph" data-nav="graph">Knowledge graph</a><a class="n" href="#tree" data-nav="tree">Tree</a><a class="n" href="#all" data-nav="all">Whole bundle</a>`;
+ let h=`<div class="sec">${svg(GI.Overview,15)}Views</div>${MODEL?'<a class="n" href="#hierarchy" data-nav="hierarchy">Product hierarchy</a><a class="n" href="#journey" data-nav="journey">Journey / experience</a><a class="n" href="#governance" data-nav="governance">Decisions / authority</a><a class="n" href="#assurance" data-nav="assurance">Evidence / proof</a><a class="n" href="#gaps" data-nav="gaps">Unresolved gaps</a>':''}<a class="n" href="#timeline" data-nav="timeline">Timeline</a><a class="n" href="#calendar" data-nav="calendar">Calendar</a><a class="n" href="#graph" data-nav="graph">Typed graph</a><a class="n" href="#tree" data-nav="tree">Source / folders</a><a class="n" href="#all" data-nav="all">Whole bundle</a>`;
  let hits=0;
  h+=G0.map(g=>{const it=g.i.filter(d=>!q||d.title.toLowerCase().includes(q)||d.slug.includes(q)||String(d.tags||"").toLowerCase().includes(q));
    hits+=it.length;if(!it.length)return"";
@@ -435,9 +469,13 @@ document.getElementById("q").oninput=e=>nav(e.target.value);
 /* docs */
 document.getElementById("body").innerHTML=DOCS.map(d=>{
  const v=d.verified||{},t=tier(v.by);
+ const tm=d.temporal||{};
  const fl=t==="agent"?`<div class="fl"><strong>Agent-verified.</strong> Under OKF v0.2 weighting (human &gt; job &gt; agent) treat as unverified for gate-shaped decisions.</div>`:"";
  const tr=v.by?`<div class="trust"><div class="hd"><span class="dot ${t}"></span>${esc(v.by)} · ${d.type}</div><dl>
    <dt>verified</dt><dd>${esc(v.at||"—")}</dd><dt>method</dt><dd>${esc(v.method||"—")}</dd>
+   ${tm.created_at?`<dt>created</dt><dd>${esc(tm.created_at)}</dd>`:""}
+   ${tm.updated_at?`<dt>updated</dt><dd>${esc(tm.updated_at)}</dd>`:""}
+   ${tm.accepted_at?`<dt>accepted</dt><dd>${esc(tm.accepted_at)} · ${esc(tm.accepted_by||"—")}</dd>`:""}
    ${v.stale_after?`<dt>stale after</dt><dd>${esc(v.stale_after)}</dd>`:""}</dl>${fl}</div>`:"";
  const cards=(l,lb)=>l&&l.length?`<h4>${lb}</h4><div class="cards">`+l.map(s=>{const o=B[s];if(!o)return"";
    return `<a class="card" href="#${s}" data-nav="${s}"><div class="t">${esc(o.title)}</div>
@@ -453,14 +491,29 @@ document.getElementById("body").innerHTML=DOCS.map(d=>{
  <button class="ib" onclick="print()">Print</button></div>
  <div id="allhost"></div></article>`+
 `<article class="doc" id="doc-tree"><div class="eyebrow">Overview</div>
- <h1>Tree</h1>
- <p>The containment view: bundle → section → document. OKF's <em>meaning</em> lives in the links between documents — see the <a href="#graph" data-nav="graph">knowledge graph</a> — but at this size a hierarchy is what you can actually navigate. Directories are storage; this is that storage, made legible.</p>
+ <h1>Source / folders</h1>
+ <p>The storage projection: bundle → source path → rendered entity. It is useful for editing, but carries no canonical product meaning. See <a href="#hierarchy" data-nav="hierarchy">Product hierarchy</a> for structure.</p>
  <div class="tbar"><button class="ib" onclick="document.querySelectorAll('#treehost details').forEach(d=>d.open=true)">Expand all</button>
  <button class="ib" onclick="document.querySelectorAll('#treehost details').forEach(d=>d.open=false)">Collapse all</button></div>
  <div class="tree" id="treehost"></div></article>`+
+`<article class="doc" id="doc-hierarchy"><div class="eyebrow">Canonical model</div><h1>Product hierarchy</h1><p>The single ordered <code>contains</code> tree rooted at the product. Folder names and dates do not affect it.</p><div id="hierarchyhost"></div></article>`+
+`<article class="doc" id="doc-journey"><div class="eyebrow">Canonical model</div><h1>Journey / experience</h1><p>Journeys project through ordered moments, surfaces, states, and available interactions.</p><div id="journeyhost"></div></article>`+
+`<article class="doc" id="doc-governance"><div class="eyebrow">Canonical model</div><h1>Decisions / authority</h1><p>Product decisions, what they govern, and the named authorities owning state.</p><div id="governancehost"></div></article>`+
+`<article class="doc" id="doc-assurance"><div class="eyebrow">Canonical model</div><h1>Evidence / proof</h1><p>Cited observations and falsifiable gates remain distinct.</p><div id="assurancehost"></div></article>`+
+`<article class="doc" id="doc-gaps"><div class="eyebrow">Canonical model</div><h1>Unresolved gaps</h1><p>Known missing decisions, evidence, and authority are first-class blockers, not hidden absence.</p><div id="gapshost"></div></article>`+
+`<article class="doc" id="doc-timeline"><div class="eyebrow">Activity</div>
+ <h1>Timeline</h1>
+ <p>The chronological list of the same derived activity stream used by Calendar: document creation, definition updates, accepted decisions, and dated log entries. File names and navigation order do not affect it.</p>
+ <div class="timeline" id="timelinehost"></div></article>`+
+`<article class="doc" id="doc-calendar"><div class="eyebrow">Activity</div>
+ <h1>Calendar</h1>
+ <p>The day, week, month, and year projections of the same activity stream shown in <a href="#timeline" data-nav="timeline">Timeline</a>. Legacy documents without temporal metadata remain undated; no history is inferred.</p>
+ <div class="calnav"><button class="ib" onclick="calMove(-1)" aria-label="Previous period">←</button><button class="ib" onclick="calToday()">Today</button><button class="ib" onclick="calMove(1)" aria-label="Next period">→</button><span id="calheading"></span>
+  <div class="views" role="group" aria-label="Calendar view"><button class="ib" data-calview="day" onclick="calSetView('day')">Day</button><button class="ib" data-calview="week" onclick="calSetView('week')">Week</button><button class="ib" data-calview="month" onclick="calSetView('month')">Month</button><button class="ib" data-calview="year" onclick="calSetView('year')">Year</button></div></div>
+ <div id="calendarhost"></div></article>`+
 `<article class="doc" id="doc-graph"><div class="eyebrow">Overview</div>
- <h1>Knowledge graph</h1>
- <p>OKF is a <strong>graph, not a tree</strong>. Directories are storage; the real structure is the links documents make to each other. Every edge is a markdown reference. Drag to rearrange, click to open.</p>
+ <h1>Typed product graph</h1>
+ <p>Every edge is a canonical typed OPF relationship. Storage links and activity references do not change this graph. Drag to rearrange, click to open.</p>
  <div id="gw"><div id="graph"></div><div class="gl">
    <span><span class="dot human"></span>human-verified</span><span><span class="dot job"></span>job-verified</span>
    <span><span class="dot agent"></span>agent-verified</span><span>node size = inbound links</span></div></div></article>`;
@@ -519,7 +572,7 @@ function buildTree(){
   const host=document.getElementById("treehost"); if(!host) return;
   const bundles={};
   const single=(DOCS.find(d=>d.slug==="index")||DOCS[0]||{}).title||"This bundle";
-  DOCS.forEach(d=>{const b=d.bundle||single;const k=d.section||d.group;
+  DOCS.forEach(d=>{const b=d.bundle||single;const k=MODEL?(d.file.includes("/")?d.file.split("/")[0]:"Pack root"):(d.section||d.group);
     bundles[b]=bundles[b]||{}; (bundles[b][k]=bundles[b][k]||[]).push(d)});
   const ORDER=["Bundle","Concepts","Evidence","Learnings"];
   const names=Object.keys(bundles).sort();
@@ -536,6 +589,67 @@ function buildTree(){
         <span class="nm">${esc(b)}</span><span class="ct">${n}</span></summary>
       <div class="tnode">${inner}</div></details>`}).join("");
 }
+
+const rels=(type,from)=>RELS.filter(r=>r.type===type&&(!from||r.from===from));
+const entityLink=id=>`<a href="#${id}" data-nav="${id}">${esc((ENTS[id]||{}).title||id)}</a>`;
+function buildHierarchy(){const host=document.getElementById("hierarchyhost");if(!host||!MODEL)return;
+ const children={};rels("contains").sort((a,b)=>a.order-b.order).forEach(r=>(children[r.from]=children[r.from]||[]).push(r.to));
+ const branch=id=>`<div class="hbranch"><div class="hitem">${entityLink(id)} <small>${esc(ENTS[id].type)} · ${esc(ENTS[id].status)}</small></div>${(children[id]||[]).map(branch).join("")}</div>`;
+ host.innerHTML=branch(MODEL.product)}
+function buildJourney(){const host=document.getElementById("journeyhost");if(!host||!MODEL)return;
+ const journeys=MODEL.entities.filter(e=>e.type==="journey");host.innerHTML=journeys.length?journeys.map(j=>{const steps=rels("has-step",j.id).sort((a,b)=>a.order-b.order);
+  return `<section class="vcard"><h2>${entityLink(j.id)}</h2><div class="flow">${steps.map((r,i)=>{const uses=rels("uses",r.to).map(x=>x.to),surfaces=uses.map(id=>entityLink(id)).join(", ");return `${i?'<span class="arrow">→</span>':""}<div class="vcard"><h3>${entityLink(r.to)}</h3><div class="vmeta">step ${r.order+1}</div><p>${surfaces||"No surface linked"}</p></div>`}).join("")}</div></section>`}).join(""):'<p class="empty">No journey entities.</p>'}
+function buildGovernance(){const host=document.getElementById("governancehost");if(!host||!MODEL)return;
+ const items=MODEL.entities.filter(e=>["decision","authority"].includes(e.type));host.innerHTML=`<div class="vstack">${items.map(e=>{const targets=rels("decides",e.id).map(r=>r.to);return `<div class="vcard"><h2>${entityLink(e.id)}</h2><div class="vmeta">${e.type} · ${e.status}</div>${e.description?`<p>${esc(e.description)}</p>`:""}${targets.length?`<div class="vlinks">${targets.map(entityLink).join("")}</div>`:""}</div>`}).join("")}</div>`}
+function buildAssurance(){const host=document.getElementById("assurancehost");if(!host||!MODEL)return;
+ const items=MODEL.entities.filter(e=>["evidence","proof"].includes(e.type));host.innerHTML=`<div class="vstack">${items.map(e=>`<div class="vcard"><h2>${entityLink(e.id)}</h2><div class="vmeta">${e.type} · ${e.status}</div>${e.description?`<p>${esc(e.description)}</p>`:""}</div>`).join("")}</div>`}
+function buildGaps(){const host=document.getElementById("gapshost");if(!host||!MODEL)return;
+ const gaps=MODEL.entities.filter(e=>e.type==="gap");host.innerHTML=`<div class="vstack">${gaps.map(e=>{const blocked=rels("blocks",e.id).map(r=>r.to);return `<div class="vcard"><h2>${entityLink(e.id)}</h2><div class="vmeta">${e.status}</div><p>${esc(e.description||"")}</p><div class="vlinks">${blocked.map(entityLink).join("")}</div></div>`}).join("")}</div>`}
+
+const ACTIVITY=DOCS.flatMap(d=>(d.activity||[]).map(e=>({...e,slug:d.slug,title:d.title})))
+ .sort((a,b)=>Date.parse(b.at)-Date.parse(a.at)||(b.order||0)-(a.order||0));
+const activityText=e=>e.detail||(e.kind==="log"?"Log entry":
+ e.kind==="accepted"?`Decision accepted${e.actor?" by "+e.actor:""}`:
+ ({created:"Created",updated:"Updated"}[e.kind]||e.kind));
+const eventTarget=e=>(e.refs&&e.refs[0])||e.slug;
+function eventRefs(e){
+ if(e.refs&&e.refs.length)return `<span class="erefs">${e.refs.map(s=>`<a class="eref" href="#${s}" data-nav="${s}">↗ ${esc((B[s]||{}).title||s)}</a>`).join("")}</span>`;
+ if(e.unresolved&&e.unresolved.length)return `<span class="missingref">Unresolved concept reference: ${esc(e.unresolved.join(", "))}</span>`;
+ return e.kind==="log"?`<span class="missingref">No concept reference recorded</span>`:"";
+}
+function buildTimeline(){
+ const host=document.getElementById("timelinehost");if(!host||host.dataset.built)return;host.dataset.built="1";
+ host.innerHTML=ACTIVITY.length?ACTIVITY.map(e=>`<div class="te"><time datetime="${esc(e.at)}">${esc(e.at)}</time>
+  <a href="#${eventTarget(e)}" data-nav="${eventTarget(e)}">${esc(e.kind==="log"?activityText(e):e.title)}</a>
+  ${e.kind==="log"?"":`<p>${esc(activityText(e))}</p>`}${eventRefs(e)}</div>`).join(""):
+  `<p class="empty">No dated document metadata or log entries. Existing documents remain undated until real provenance is recorded.</p>`;
+}
+const BYDAY={};ACTIVITY.forEach(e=>(BYDAY[e.at.slice(0,10)]=BYDAY[e.at.slice(0,10)]||[]).push(e));
+const dayKey=d=>d.toISOString().slice(0,10),utcDay=s=>new Date(`${s.slice(0,10)}T00:00:00Z`);
+let CALVIEW="month",CALDATE=ACTIVITY.length?utcDay(ACTIVITY[0].at):utcDay(new Date().toISOString());
+const dateLabel=(d,opt)=>d.toLocaleString(undefined,{...opt,timeZone:"UTC"});
+const compactEvent=e=>{const missing=e.kind==="log"&&!(e.refs||[]).length;
+ return `<a class="ce" href="#${eventTarget(e)}" data-nav="${eventTarget(e)}" title="${esc((missing?"No concept reference recorded · ":"")+activityText(e))}">${missing?"⚠ ":""}${esc(e.kind==="log"?activityText(e):e.title)}</a>`};
+const eventList=events=>events.length?`<div class="eventlist">${events.map(e=>`<div class="eventrow"><time>${esc(e.at)}</time><a class="eref" href="#${eventTarget(e)}" data-nav="${eventTarget(e)}">${esc(e.kind==="log"?activityText(e):e.title)}</a>${e.kind==="log"?"":`<p>${esc(activityText(e))}</p>`}${eventRefs(e)}</div>`).join("")}</div>`:`<p class="empty">No recorded activity in this period.</p>`;
+function monthGrid(date){const y=date.getUTCFullYear(),mo=date.getUTCMonth(),first=new Date(Date.UTC(y,mo,1)),days=new Date(Date.UTC(y,mo+1,0)).getUTCDate();
+ const cells=Array(first.getUTCDay()).fill('<div class="day empty"></div>');
+ for(let n=1;n<=days;n++){const day=dayKey(new Date(Date.UTC(y,mo,n))),events=BYDAY[day]||[];
+  cells.push(`<div class="day"><span class="dn">${n}</span>${events.map(compactEvent).join("")}</div>`)}
+ return `<div class="calpanel"><div class="calgrid">${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=>`<div class="dow">${d}</div>`).join("")}${cells.join("")}</div></div>`}
+function renderCalendar(){const host=document.getElementById("calendarhost"),head=document.getElementById("calheading");if(!host||!head)return;
+ document.querySelectorAll("[data-calview]").forEach(b=>{const on=b.dataset.calview===CALVIEW;b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on))});
+ if(CALVIEW==="day"){head.textContent=dateLabel(CALDATE,{weekday:"long",month:"long",day:"numeric",year:"numeric"});host.innerHTML=`<div class="calpanel">${eventList(BYDAY[dayKey(CALDATE)]||[])}</div>`;return}
+ if(CALVIEW==="week"){const start=new Date(CALDATE);start.setUTCDate(start.getUTCDate()-start.getUTCDay());const end=new Date(start);end.setUTCDate(end.getUTCDate()+6);
+  head.textContent=`${dateLabel(start,{month:"short",day:"numeric"})} – ${dateLabel(end,{month:"short",day:"numeric",year:"numeric"})}`;
+  host.innerHTML=`<div class="calpanel"><div class="weekgrid">${Array.from({length:7},(_,i)=>{const d=new Date(start);d.setUTCDate(d.getUTCDate()+i);const events=BYDAY[dayKey(d)]||[],missing=events.filter(e=>e.kind==="log"&&!(e.refs||[]).length).length;return `<div class="day"><strong>${dateLabel(d,{weekday:"short",month:"short",day:"numeric"})}</strong>${events.map(compactEvent).join("")}${missing?`<span class="missingref">${missing} unlinked log ${missing===1?"entry":"entries"}</span>`:""}</div>`}).join("")}</div></div>`;return}
+ if(CALVIEW==="month"){head.textContent=dateLabel(CALDATE,{month:"long",year:"numeric"});host.innerHTML=monthGrid(CALDATE);return}
+ const year=CALDATE.getUTCFullYear();head.textContent=String(year);host.innerHTML=`<div class="calpanel yeargrid">${Array.from({length:12},(_,mo)=>{const prefix=`${year}-${String(mo+1).padStart(2,"0")}`,count=Object.entries(BYDAY).filter(([d])=>d.startsWith(prefix)).reduce((n,[,e])=>n+e.length,0);return `<button class="yearmonth" onclick="calOpenMonth(${mo})"><strong>${dateLabel(new Date(Date.UTC(year,mo,1)),{month:"long"})}</strong><span>${count} ${count===1?"activity":"activities"}</span></button>`}).join("")}</div>`;
+}
+function calSetView(view){CALVIEW=view;renderCalendar()}
+function calMove(step){const d=new Date(CALDATE);if(CALVIEW==="day")d.setUTCDate(d.getUTCDate()+step);else if(CALVIEW==="week")d.setUTCDate(d.getUTCDate()+7*step);else if(CALVIEW==="month")d.setUTCMonth(d.getUTCMonth()+step);else d.setUTCFullYear(d.getUTCFullYear()+step);CALDATE=d;renderCalendar()}
+function calToday(){CALDATE=utcDay(new Date().toISOString());renderCalendar()}
+function calOpenMonth(month){CALDATE=new Date(Date.UTC(CALDATE.getUTCFullYear(),month,1));CALVIEW="month";renderCalendar()}
+function buildCalendar(){renderCalendar()}
 
 /* Graph: cytoscape + fCoSE. The hand-rolled force layout it replaces had no
    arrowheads, overlapped its own labels, clipped text at the frame, and
@@ -556,7 +670,7 @@ function G(){
       ...DOCS.map(d=>({data:{id:d.slug,label:(d.title.length>30?d.title.slice(0,29)+"…":d.title),
                              full:d.title,tier:tier(d.verified&&d.verified.by),
                              deg:deg[d.slug]||0}})),
-      ...EDGES.map((e,i)=>({data:{id:"e"+i,source:e.s,target:e.t}}))],
+      ...EDGES.map((e,i)=>({data:{id:"e"+i,source:e.s,target:e.t,type:e.type||"link"}}))],
     style:[
       {selector:"node",style:{
         "background-color":ele=>v("--"+ele.data("tier")),
@@ -570,7 +684,9 @@ function G(){
       {selector:"edge",style:{
         "width":1.4,"line-color":v("--line"),"curve-style":"bezier",
         "target-arrow-shape":"triangle","target-arrow-color":v("--line"),
-        "arrow-scale":.85,"opacity":.9}},
+        "arrow-scale":.85,"opacity":.9,"label":MODEL?"data(type)":"",
+        "font-size":"7px","color":v("--faint"),"text-background-color":v("--bg"),
+        "text-background-opacity":.85,"text-background-padding":2}},
       {selector:".hl",style:{"line-color":v("--acc"),"target-arrow-color":v("--acc"),"width":2.2,"opacity":1}},
       {selector:".dim",style:{"opacity":.12}},
       {selector:"node:selected",style:{"border-color":v("--acc"),"border-width":3}}],
@@ -620,6 +736,13 @@ function paint(){
    which would leave the sidebar unbuilt. */}
  if(s==="graph")G();
  if(s==="tree")buildTree();
+ if(s==="hierarchy")buildHierarchy();
+ if(s==="journey")buildJourney();
+ if(s==="governance")buildGovernance();
+ if(s==="assurance")buildAssurance();
+ if(s==="gaps")buildGaps();
+ if(s==="timeline")buildTimeline();
+ if(s==="calendar")buildCalendar();
  if(s==="all")buildAll();
  document.querySelector("main").scrollTop=0;
 }
@@ -660,9 +783,9 @@ const RAW=Object.fromEntries(DOCS.map(d=>[d.slug,d.src||""]));
 function toast(m){let t=document.getElementById("toast");
  if(!t){t=document.createElement("div");t.id="toast";document.body.appendChild(t)}
  t.textContent=m;t.classList.add("on");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("on"),1900)}
-function pageMd(slug){const d=B[slug];if(!d)return"";const v=d.verified||{};
+function pageMd(slug){const d=B[slug];if(!d)return"";const v=d.verified||{},tm=d.temporal||{};
  return `# ${d.title}\n\n> OKF v0.2 · type: ${d.type} · verified.by: ${v.by||"—"} (${v.at||"—"})\n`+
-  `> method: ${v.method||"—"}\n${v.by&&!String(v.by).startsWith("human:")?"> NOTE: not human-verified — treat as unverified for gate-shaped decisions.\n":""}`+
+  `> method: ${v.method||"—"}\n${tm.created_at?"> created: "+tm.created_at+"\n":""}${tm.updated_at?"> updated: "+tm.updated_at+"\n":""}${tm.accepted_at?"> accepted: "+tm.accepted_at+" by "+(tm.accepted_by||"—")+"\n":""}${v.by&&!String(v.by).startsWith("human:")?"> NOTE: not human-verified — treat as unverified for gate-shaped decisions.\n":""}`+
   `\n${RAW[slug]||""}`}
 async function copyMd(slug,msg){try{await navigator.clipboard.writeText(pageMd(slug));toast(msg||"Copied as Markdown")}
  catch(e){const t=document.createElement("textarea");t.value=pageMd(slug);document.body.appendChild(t);

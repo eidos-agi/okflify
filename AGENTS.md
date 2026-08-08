@@ -11,6 +11,10 @@ okflify <bundle> -o out.html      # or: python3 -m okflify <bundle>
 
 ## Rules
 
+**OPF v1 comes from `product.json`.** Its entities, typed relationships,
+ordered containment, and events are canonical. Markdown and folders are source
+projections only; never promote their links or order into product semantics.
+
 **Never edit `okflify/template.html` to restyle.** Theming lives in the
 bundle's `docs.json` (Mintlify shape: `colors`, `fonts`, `appearance`,
 `background.decoration`, `styling.eyebrows`). Editing the template to change a

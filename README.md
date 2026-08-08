@@ -1,6 +1,11 @@
 # okflify
 
-**Converts OKF bundles into HTML.** One command, one self-contained file — no server, no build pipeline, no dependencies.
+**Renders canonical OPF v1 product graphs and OKF bundles as HTML.** One command, one self-contained file — no server, no build pipeline, no dependencies.
+
+For OPF v1, `product.json` is semantic authority. OKFlify derives source,
+canonical hierarchy, typed graph, journey/experience, decisions/authority,
+timeline/calendar, evidence/proof, and unresolved-gap views without inferring
+meaning from filenames or dates.
 
 ORF (research) and EMF (memory) are additive OKF profiles. The same command renders them and labels their profile versions in the header.
 
@@ -58,6 +63,10 @@ Above is a four-bundle catalogue. The largest it has been run against is 18 bund
 Click any diagram or image. Scroll zooms at the cursor, drag or <kbd>space</kbd>+drag pans, <kbd>+</kbd>/<kbd>−</kbd> zoom, <kbd>0</kbd> fit, <kbd>1</kbd> actual size, arrows nudge, <kbd>esc</kbd> closes.
 
 <img src="https://raw.githubusercontent.com/eidos-agi/okflify/master/assets/lightbox.gif" alt="Opening a diagram, zooming at the cursor, panning, fitting, closing" width="100%"/>
+
+## Timeline and calendar
+
+OPF temporal metadata (`created_at`, `updated_at`, and decision `accepted_at`) and dated `log.md` entries feed one activity stream. Timeline and the rendered log default to deterministic newest-first order; Calendar projects the same stream through navigable day, week, month, and year views. Explicit resolvable log links open their concepts, while missing references stay visible and are never guessed. These views never use filenames or sidebar position as dates.
 
 ## Whole bundle, one page
 
